@@ -15,19 +15,3 @@
 # Shiny modul
 
 
-id: zk-285-50135-13132
-type: zk
-unit: 13132
-institution: Zemljišnoknjižni odjel Zagreb
-book: ČUČERJE NOVO
-status: Aktivan
-burden: false
-
-# OIB 62694367015
-
-
-
-# u novo_privremeno - želim ubaciti fields u MongoDB funkciju da mi izvlači samo
-bitne varijable
-
-# onda ću se igrati sa merge varijablom
