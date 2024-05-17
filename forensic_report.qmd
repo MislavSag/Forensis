@@ -1,0 +1,27 @@
+---
+title: "Forensic report"
+format: html
+editor: visual
+
+---
+
+```{r}
+# TEST
+oib = "93335620125"
+```
+
+
+## Preatraga Zemljišnih knjiga
+
+
+
+```{r}
+res = zkrh("oib", "0", "true")
+
+```
+
+
+```{r}
+DT::datatable(res)
+```
+

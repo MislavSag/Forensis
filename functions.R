@@ -4,7 +4,7 @@ collection_name <- Sys.getenv("collection_name")
 
 
 # Funkcija za dohvaćanje podataka iz API-ja
-dac_hr_api <- function(search_term, part, history = "false", limit = 50, skip = 0) {
+zkrh <- function(search_term, part, history = "false", limit = 50, skip = 0) {
   response <- GET("http://dac.hr/api/v1/query",
                   query = list(
                     q = search_term,
