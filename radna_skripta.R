@@ -192,6 +192,10 @@ get_doc_MongoDB <- function(ids) {
 
 # Nova funkcija koja koristi tstrsplit i datatable umjesto lapply
 get_doc_MongoDB_2 <- function(ids) {
+  # DEBUG
+  # ids <- c("zk-285-50135-13132", "zk-285-31389-4128")
+  # ids <- rep(ids, 10)
+
   # Povezivanje na MongoDB
   conn <- mongo(collection = collection_name, db = db_name, url = db_url)
 
@@ -273,7 +277,7 @@ conn$disconnect()
 #-------------------------------# Testiranje Servera #--------------------------
 
 # TESTIRANJE FUNKCIJA U SERVERU
-api_data <- dac_hr_api("62694367015", 0, "true") # 62694367015
+api_data <- dac_hr_api("47432874968", 0, "true") # 62694367015
 
 ids <- c(api_data$id)
 
@@ -289,6 +293,53 @@ final_data[, fileUrl := ifelse(is.na(fileUrl), NA_character_, paste0(base_url, f
 final_data <- final_data[, .(id, type, unit, institution, book, status, burden, fileUrl)]
 
 #-------------------------------------------------------------------------------
+
+
+
+# TEST ATLAS SEARCH -------------------------------------------------------
+# Replace with your actual connection details
+conn <- mongo(collection = collection_name, db = db_name, url = db_url)
+
+# FIELDS_NAME_Q = [
+#   "ownershipSheetB.lrUnitShares.lrOwners.name",
+#   "ownershipSheetB.lrUnitShares.lrOwners.taxNumber",
+#   "ownershipSheetB.lrUnitShares.subSharesAndEntries.lrOwners.name"
+# ]
+
+# Define the search query using the aggregation pipeline
+desired_lrUnitNumber_value <- 1202 # Replace with the actual integer value you are searching for
+desired_mainBookId_value <- "21148" # Replace with the actual string value you are searching for
+
+query <- sprintf('[
+  {
+    "$search": {
+      "index": "ids",
+      "compound": {
+        "should": [
+          {
+            "equals": {
+              "value": %d,
+              "path": "lrUnitNumber"
+            }
+          },
+          {
+            "text": {
+              "query": "%s",
+              "path": "mainBookId"
+            }
+          }
+        ]
+      }
+    }
+  }
+]', desired_lrUnitNumber_value, desired_mainBookId_value)
+# Execute the search query
+results <- conn$aggregate(pipeline = query)
+
+# Print the search results
+print(results)
+
+
 
 
 

@@ -6,18 +6,19 @@ library(bslib)
 library(DT)
 library(httr)
 library(jsonlite)
-library(tidyverse)
+# library(tidyverse) # TODO: install individual packages
 library(data.table)
 library(shinydashboard)
 library(mongolite)
 
-library(microbenchmark) # izračun vremena operacija
+# library(microbenchmark) # izračun vremena operacija
 
 # Učitavanje zasebnih skripti
 source("functions.R")
 
 # Učitajte varijable okruženja
 db_url <- Sys.getenv("db_url")
+print(db_url)
 db_name <- Sys.getenv("db_name")
 collection_name <- Sys.getenv("collection_name")
 
@@ -73,7 +74,7 @@ server <- function(input, output) {
 
     # Dohvaćanje rezultata pretrage iz API-ja
     api_data <- dac_hr_api(input$term, input$checkbox, input$history)
-    if (nrow(api_data) == 0) return(data.table())
+    if (nrow(api_data) == 0) return(data.table(Rezultat = "Nem rezultata pretrage"))
 
     # Dohvaćanje dokumenata iz MongoDB-a
     mongo_data <- get_doc_MongoDB(api_data$id)
@@ -92,6 +93,10 @@ server <- function(input, output) {
   })
 
   output$rezultati_tab <- renderDT({
+    if (length(pretraga_rezultati()) == 0) {
+      return(data.table(Rezultat = "Nem rezultata pretrage"))
+    }
+
     datatable(pretraga_rezultati(), escape = FALSE, options = list(
       columnDefs = list(
         list(targets = ncol(pretraga_rezultati()),  # Dinamičko određivanje indeksa stupca fileUrl
