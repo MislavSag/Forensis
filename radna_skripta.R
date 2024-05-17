@@ -342,5 +342,70 @@ print(results)
 
 
 
+# Install and load the mongolite package
+install.packages("mongolite")
+library(mongolite)
+
+# Define the connection URI, database, and collection
+uri <- "your_atlas_connection_string" # Replace with your Atlas connection string
+database_name <- "your_database_name" # Replace with your database name
+collection_name <- "your_collection_name" # Replace with your collection name
+
+# Create a connection to the MongoDB collection
+collection <- mongo(collection = collection_name, db = database_name, url = uri)
+
+# Define the search query with multiple combinations
+query <- '[
+  {
+    "$search": {
+      "index": "ids",
+      "compound": {
+        "should": [
+          {
+            "compound": {
+              "must": [
+                { "equals": { "value": %d, "path": "lrUnitNumber" } },
+                { "text": { "query": "%s", "path": "mainBookId" } }
+              ]
+            }
+          },
+          {
+            "compound": {
+              "must": [
+                { "equals": { "value": %d, "path": "lrUnitNumber" } },
+                { "text": { "query": "%s", "path": "mainBookId" } }
+              ]
+            }
+          },
+          {
+            "compound": {
+              "must": [
+                { "equals": { "value": %d, "path": "lrUnitNumber" } },
+                { "text": { "query": "%s", "path": "mainBookId" } }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+]'
+
+# Replace placeholders with actual values
+lrUnitNumber_values <- c(12345, 67890, 11121) # Replace with the actual integer values
+mainBookId_values <- c("bookId1", "bookId2", "bookId3") # Replace with the actual string values
+
+# Use R's sprintf to inject the actual values into the query
+query <- sprintf(query,
+                 lrUnitNumber_values[1], mainBookId_values[1],
+                 lrUnitNumber_values[2], mainBookId_values[2],
+                 lrUnitNumber_values[3], mainBookId_values[3]
+)
+
+# Perform the aggregation query
+results <- collection$aggregate(query)
+
+# Print the search results
+print(results)
 
 
