@@ -1,8 +1,3 @@
-db_url <- Sys.getenv("db_url")
-db_name <- Sys.getenv("db_name")
-collection_name <- Sys.getenv("collection_name")
-
-
 # Funkcija za dohvaćanje podataka iz API-ja
 zkrh <- function(search_term, part, history = "false", limit = 50, skip = 0) {
   response <- GET("http://dac.hr/api/v1/query",
@@ -35,29 +30,60 @@ zkrh <- function(search_term, part, history = "false", limit = 50, skip = 0) {
   }
 }
 
-# Funkcija za dohvaćanje dokumenata iz MongoDB baze
-get_doc_MongoDB <- function(ids) {
-  # Povezivanje na MongoDB
+# funkcija sa dohvaćanje dokumenata iz MongoDB baze
+# koristi se atlas search (22.05.) koji je znatno skratio vrijeme dohvate docc
+mongoDB <- function(ids) {
   conn <- mongo(collection = collection_name, db = db_name, url = db_url)
 
-  # Razdvajanje ID-ova na dijelove
-  id_parts <- tstrsplit(ids, "-", fixed = TRUE)
-  conditions <- data.table(
-    lrUnitNumber = id_parts[[4]],
-    mainBookId = as.numeric(id_parts[[3]])
-  )
-
-  # Konverzija uvjeta u listu imenovanih listi
-  conditions_list <- lapply(1:nrow(conditions), function(i) {
-    list(lrUnitNumber = conditions$lrUnitNumber[i], mainBookId = conditions$mainBookId[i])
+  conditions <- lapply(ids, function(id) {
+    parts <- unlist(strsplit(id, split = "-"))
+    lrUnitNumber <- parts[length(parts)]
+    mainBookId <- as.numeric(parts[length(parts)-1])
+    list(
+      'compound' = list(
+        'must' = list(
+          list(
+            'text' = list(
+              'query' = lrUnitNumber,
+              'path' = 'lrUnitNumber'
+            )
+          ),
+          list(
+            'equals' = list(
+              'path' = 'mainBookId',
+              'value' = mainBookId
+            )
+          )
+        )
+      )
+    )
   })
 
-  # Konverzija u JSON format
-  query <- jsonlite::toJSON(list('$or' = conditions_list), auto_unbox = TRUE)
+  combined_conditions <- list(
+    'should' = conditions
+  )
 
-  # Pokretanje upita
-  documents <- conn$find(query, fields = '{"institutionId" : true, "lrUnitNumber" : true,
-                                          "mainBookId" : true, "fileUrl" : true}')
+  search_query <- list(
+    list(
+      '$search' = list(
+        'index' = 'ids',
+        'compound' = combined_conditions
+      )
+    ),
+    list(
+      '$project' = list(
+        'institutionId' = 1,
+        'lrUnitNumber' = 1,
+        'mainBookId' = 1,
+        'fileUrl' = 1
+      )
+    )
+  )
+
+  search_query_json <- toJSON(search_query, auto_unbox = TRUE)
+
+  documents <- conn$aggregate(pipeline = search_query_json)
+
   conn$disconnect()
 
   return(documents)

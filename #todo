@@ -1,17 +1,11 @@
-# history parametar tražilica - DA/NE
+# NOVO:
+# "NEMA REZULTATA PRETRAGE" - dodano u app
+# Moduli napravljeni
+# spiner dodan kod pretrazivanja
+# novi nazivi stupaca
+# Atlas search
 
-# ovo ubaciti u kod: httr::status_code(response) - 200 oznaka za uspješan zahtjev
-
-
-### MONGODB skupni zahtjevi
-# skini URL i ID i onda spoji
-# bolji način: Mongo vrati redosljed URL po kojem je poslan upit
-# Mongo mi moze vratiti samo ID i URL, ne treba cijeli json
-
-# INDEKSI
-# napraviti dva pojedinačna umjesto jedan slozeni indeks
-# zašto ne moze napraviti slozeni indeks ?
-
-# Shiny modul
+# U IZRADI:
+## REPORT ##
 
 

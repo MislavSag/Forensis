@@ -256,6 +256,109 @@ spoji_podatke <- function(api_data, mongo_data) {
 }
 
 #-------------------------------------------------------------------------------
+#-----------------------# Benchmark - MongoDB Atlas search #--------------------
+
+get_doc_MongoDB_old <- function(ids) {
+  conn <- mongo(collection = collection_name, db = db_name, url = db_url)
+
+  conditions <- lapply(ids, function(id) {
+    parts <- unlist(strsplit(id, split = "-"))
+    lrUnitNumber <- parts[length(parts)]
+    mainBookId <- as.numeric(parts[length(parts)-1])
+    list(lrUnitNumber = lrUnitNumber, mainBookId = mainBookId)
+  })
+
+  query <- jsonlite::toJSON(list('$or' = conditions), auto_unbox = TRUE)
+  documents <- conn$find(query, fields = '{"institutionId" : true, "lrUnitNumber" : true,
+                                          "mainBookId" : true, "fileUrl" : true}')
+  conn$disconnect()
+
+  return(documents)
+}
+
+get_doc_MongoDB_atlas <- function(ids) {
+  conn <- mongo(collection = collection_name, db = db_name, url = db_url)
+
+  conditions <- lapply(ids, function(id) {
+    parts <- unlist(strsplit(id, split = "-"))
+    lrUnitNumber <- parts[length(parts)]
+    mainBookId <- as.numeric(parts[length(parts)-1])
+    list(
+      'compound' = list(
+        'must' = list(
+          list(
+            'text' = list(
+              'query' = lrUnitNumber,
+              'path' = 'lrUnitNumber'
+            )
+          ),
+          list(
+            'equals' = list(
+              'path' = 'mainBookId',
+              'value' = mainBookId
+            )
+          )
+        )
+      )
+    )
+  })
+
+  combined_conditions <- list(
+    'should' = conditions
+  )
+
+  search_query <- list(
+    list(
+      '$search' = list(
+        'index' = 'ids',
+        'compound' = combined_conditions
+      )
+    ),
+    list(
+      '$project' = list(
+        'institutionId' = 1,
+        'lrUnitNumber' = 1,
+        'mainBookId' = 1,
+        'fileUrl' = 1
+      )
+    )
+  )
+
+  search_query_json <- toJSON(search_query, auto_unbox = TRUE)
+
+  documents <- conn$aggregate(pipeline = search_query_json)
+
+  conn$disconnect()
+
+  return(documents)
+}
+
+# TESTIRANJE FUNKCIJA U SERVERU
+api_data <- zkrh("Darko Matić", 0, "true") # 62694367015
+ids_50 <- c(api_data$id)
+
+
+# Usporedba vremena izvršavanja
+library(microbenchmark)
+
+benchmark_result <- microbenchmark(
+  old = get_doc_MongoDB_old(ids_50),
+  new = get_doc_MongoDB_atlas(ids_50),
+  times = 20  # Broj ponavljanja testa za bolju statistiku
+)
+
+# Ispis rezultata
+print(benchmark_result)
+
+# Vizualizacija rezultata
+library(ggplot2)
+autoplot(benchmark_result)
+
+
+# Stara Funkcija: Prosječno vrijeme izvršavanja je oko 31.757 sekundi (31.757 ms), što je značajno sporije.
+# Nova Funkcija: Prosječno vrijeme izvršavanja je oko 0.654 sekundi (654 ms), što je nevjerojatno brže.
+
+#-------------------------------------------------------------------------------
 #---------------------------------# indexes #-----------------------------------
 
 # Ponovno povezivanje ako je konekcija zatvorena
@@ -273,11 +376,16 @@ indexes <- conn$index()
 # Zatvaranje konekcije
 conn$disconnect()
 
+# 22.05.2024. Atlas search koji koristi složeni indeks sa 2 polja je u funkciji i
+# ispravan. Rezultat je znatno smanjenje potrebnog vremena za dohvaćanje dokumenata
+# vidi .txt skriptu u backup folderu - napisani su queryji za atlas search koji se
+# mogu provesti na MonogDB webu. Iz toga je kreiran kod u R-u i automatizacija
+
 #-------------------------------------------------------------------------------
 #-------------------------------# Testiranje Servera #--------------------------
 
 # TESTIRANJE FUNKCIJA U SERVERU
-api_data <- dac_hr_api("47432874968", 0, "true") # 62694367015
+api_data <- zkrh("62694367015", 0, "true") # 62694367015
 
 ids <- c(api_data$id)
 
@@ -293,119 +401,4 @@ final_data[, fileUrl := ifelse(is.na(fileUrl), NA_character_, paste0(base_url, f
 final_data <- final_data[, .(id, type, unit, institution, book, status, burden, fileUrl)]
 
 #-------------------------------------------------------------------------------
-
-
-
-# TEST ATLAS SEARCH -------------------------------------------------------
-# Replace with your actual connection details
-conn <- mongo(collection = collection_name, db = db_name, url = db_url)
-
-# FIELDS_NAME_Q = [
-#   "ownershipSheetB.lrUnitShares.lrOwners.name",
-#   "ownershipSheetB.lrUnitShares.lrOwners.taxNumber",
-#   "ownershipSheetB.lrUnitShares.subSharesAndEntries.lrOwners.name"
-# ]
-
-# Define the search query using the aggregation pipeline
-desired_lrUnitNumber_value <- 1202 # Replace with the actual integer value you are searching for
-desired_mainBookId_value <- "21148" # Replace with the actual string value you are searching for
-
-query <- sprintf('[
-  {
-    "$search": {
-      "index": "ids",
-      "compound": {
-        "should": [
-          {
-            "equals": {
-              "value": %d,
-              "path": "lrUnitNumber"
-            }
-          },
-          {
-            "text": {
-              "query": "%s",
-              "path": "mainBookId"
-            }
-          }
-        ]
-      }
-    }
-  }
-]', desired_lrUnitNumber_value, desired_mainBookId_value)
-# Execute the search query
-results <- conn$aggregate(pipeline = query)
-
-# Print the search results
-print(results)
-
-
-
-
-# Install and load the mongolite package
-install.packages("mongolite")
-library(mongolite)
-
-# Define the connection URI, database, and collection
-uri <- "your_atlas_connection_string" # Replace with your Atlas connection string
-database_name <- "your_database_name" # Replace with your database name
-collection_name <- "your_collection_name" # Replace with your collection name
-
-# Create a connection to the MongoDB collection
-collection <- mongo(collection = collection_name, db = database_name, url = uri)
-
-# Define the search query with multiple combinations
-query <- '[
-  {
-    "$search": {
-      "index": "ids",
-      "compound": {
-        "should": [
-          {
-            "compound": {
-              "must": [
-                { "equals": { "value": %d, "path": "lrUnitNumber" } },
-                { "text": { "query": "%s", "path": "mainBookId" } }
-              ]
-            }
-          },
-          {
-            "compound": {
-              "must": [
-                { "equals": { "value": %d, "path": "lrUnitNumber" } },
-                { "text": { "query": "%s", "path": "mainBookId" } }
-              ]
-            }
-          },
-          {
-            "compound": {
-              "must": [
-                { "equals": { "value": %d, "path": "lrUnitNumber" } },
-                { "text": { "query": "%s", "path": "mainBookId" } }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  }
-]'
-
-# Replace placeholders with actual values
-lrUnitNumber_values <- c(12345, 67890, 11121) # Replace with the actual integer values
-mainBookId_values <- c("bookId1", "bookId2", "bookId3") # Replace with the actual string values
-
-# Use R's sprintf to inject the actual values into the query
-query <- sprintf(query,
-                 lrUnitNumber_values[1], mainBookId_values[1],
-                 lrUnitNumber_values[2], mainBookId_values[2],
-                 lrUnitNumber_values[3], mainBookId_values[3]
-)
-
-# Perform the aggregation query
-results <- collection$aggregate(query)
-
-# Print the search results
-print(results)
-
 

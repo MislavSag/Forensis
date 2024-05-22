@@ -6,19 +6,19 @@ library(bslib)
 library(DT)
 library(httr)
 library(jsonlite)
-# library(tidyverse) # TODO: install individual packages
 library(data.table)
 library(shinydashboard)
 library(mongolite)
-
-# library(microbenchmark) # izračun vremena operacija
+library(shinycssloaders) # ovo je za spinera kod pretraživanja / maknuti ?
 
 # Učitavanje zasebnih skripti
 source("functions.R")
+source("mod_zemljisne_knjige.R")
+source("mod_registar_plovila.R")
+source("mod_forensis_dokument.R")
 
 # Učitajte varijable okruženja
 db_url <- Sys.getenv("db_url")
-print(db_url)
 db_name <- Sys.getenv("db_name")
 collection_name <- Sys.getenv("collection_name")
 
@@ -28,38 +28,23 @@ ui <- dashboardPage(
   dashboardHeader(title = "Forensis"),
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Pretraga", tabName = "pretraga", icon = icon("search")),
-      menuItem("Analiza", tabName = "analiza", icon = icon("chart-line"))
+      menuItem("Zemljišne knjige RH", tabName = "zemljisne_knjige", icon = icon("book")),
+      menuItem("Registar plovila RH", tabName = "registar_plovila", icon = icon("ship")),
+      menuItem("Forensis dokument", tabName = "forensis_dokument", icon = icon("file-alt"))
     ),
     collapsible = TRUE,
     collapsed = TRUE
   ),
   dashboardBody(
     tabItems(
-      tabItem(tabName = "pretraga",
-              fluidPage(
-                titlePanel("Pretraga Katastra"),
-                sidebarLayout(
-                  sidebarPanel(
-                    textInput("term", "Unesite pojam za pretragu katastra", value = ""),
-                    radioButtons("checkbox", "Pretraži dio",
-                                 choices = list("Sve" = "0", "Dio A" = "1", "Dio B" = "2", "Dio C" = "3"),
-                                 selected = "0"),
-                    radioButtons("history", "Povijest",
-                                 choices = list("Da" = "true", "Ne" = "false"),
-                                 selected = "true"),
-                    actionButton("pretraga", "Pretraži", style = "width:100%;")
-                  ),
-                  mainPanel(
-                    dataTableOutput("rezultati_tab")
-                  )
-                )
-              )
+      tabItem(tabName = "zemljisne_knjige",
+              MUI1_zemljisne_knjige("zemljisne_knjige1")
       ),
-      tabItem(tabName = "analiza",
-              fluidPage(
-                titlePanel("Analiza Podataka")
-              )
+      tabItem(tabName = "registar_plovila",
+              MUI1_registar_plovila("registar_plovila1")
+      ),
+      tabItem(tabName = "forensis_dokument",
+              MUI1_forensis_dokument("forensis_dokument1")
       )
     )
   )
@@ -68,52 +53,13 @@ ui <- dashboardPage(
 #-------------------------------------------------------------------------------
 #-----------------------------------# SERVER #----------------------------------
 
-server <- function(input, output) {
-  pretraga_rezultati <- eventReactive(input$pretraga, {
-    req(input$term)
-
-    # Dohvaćanje rezultata pretrage iz API-ja
-    api_data <- dac_hr_api(input$term, input$checkbox, input$history)
-    if (nrow(api_data) == 0) return(data.table(Rezultat = "Nem rezultata pretrage"))
-
-    # Dohvaćanje dokumenata iz MongoDB-a
-    mongo_data <- get_doc_MongoDB(api_data$id)
-
-    # Spajanje podataka
-    final_data <- spoji_podatke(api_data, mongo_data)
-
-    # Ažuriranje URL-a
-    base_url <- "https://oss.uredjenazemlja.hr/oss/public/reports/ldb-extract/"
-    final_data[, fileUrl := ifelse(is.na(fileUrl), NA_character_, paste0(base_url, fileUrl))]
-
-    # Odabir potrebnih varijabli
-    final_data <- final_data[, .(id, type, unit, institution, book, status, burden, fileUrl)]
-
-    return(final_data)
-  })
-
-  output$rezultati_tab <- renderDT({
-    if (length(pretraga_rezultati()) == 0) {
-      return(data.table(Rezultat = "Nem rezultata pretrage"))
-    }
-
-    datatable(pretraga_rezultati(), escape = FALSE, options = list(
-      columnDefs = list(
-        list(targets = ncol(pretraga_rezultati()),  # Dinamičko određivanje indeksa stupca fileUrl
-             render = JS(
-               "function(data, type, row) {
-                 return type === 'display' && data ? '<a href=\"' + data + '\" target=\"_blank\">Open</a>' : data;
-               }"
-             )
-        )
-      )
-    ))
-  })
+server <- function(input, output, session) {
+  callModule(MS_zemljisne_knjige, "zemljisne_knjige1")
+  callModule(MS_registar_plovila, "registar_plovila1")
+  callModule(MS_forensis_dokument, "forensis_dokument1")
 }
 
 #-------------------------------------------------------------------------------
 
 # Pokretanje aplikacije
 shinyApp(ui, server)
-
-
