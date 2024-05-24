@@ -1,5 +1,5 @@
 # Funkcija za dohvaćanje podataka iz API-ja
-zkrh <- function(search_term, part, history = "false", limit = 50, skip = 0) {
+zkrh <- function(search_term, part, history = "false", limit = 200, skip = 0) {
   response <- GET("http://dac.hr/api/v1/query",
                   query = list(
                     q = search_term,

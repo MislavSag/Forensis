@@ -1,6 +1,6 @@
 # mod_forensis_dokument.R
 
-MUI1_forensis_dokument <- function(id) {
+MUI_forensis_dokument <- function(id) {
   ns <- NS(id)
   fluidPage(
     titlePanel("Forensis dokument"),

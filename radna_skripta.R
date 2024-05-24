@@ -1,7 +1,7 @@
 #-------------------------------------------------------------------------------
-#---------------------------# dac_hr_api funckija #-----------------------------
+#-------------------------------# zkrh funckija #-------------------------------
 
-dac_hr_api <- function(search_term, part, history = "false", limit = 50, skip = 0) {
+zkrh <- function(search_term, part, history = "false", limit = 50, skip = 0) {
   response <- GET("http://dac.hr/api/v1/query",
                   query = list(
                     q = search_term,
@@ -29,7 +29,7 @@ dac_hr_api <- function(search_term, part, history = "false", limit = 50, skip = 
 # u funckiju za shiny se id dodatno dijeli na inentifikatore koji služe za spajanje
 # podataka sa MongoDB dokumentima
 
-dac_dt <- dac_hr_api("62694367015", 0, history = "false")
+zkrh_dt <- zkrh("Darko Matić", 0, history = "false", limit = 20)
 
 #-------------------------------------------------------------------------------
 #------------------------# Izvlačenje url-a iz MongoDB #------------------------
@@ -344,7 +344,7 @@ library(microbenchmark)
 benchmark_result <- microbenchmark(
   old = get_doc_MongoDB_old(ids_50),
   new = get_doc_MongoDB_atlas(ids_50),
-  times = 20  # Broj ponavljanja testa za bolju statistiku
+  times = 3  # Broj ponavljanja testa za bolju statistiku
 )
 
 # Ispis rezultata

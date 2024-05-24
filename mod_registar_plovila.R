@@ -1,6 +1,6 @@
 # mod_registar_plovila.R
 
-MUI1_registar_plovila <- function(id) {
+MUI_registar_plovila <- function(id) {
   ns <- NS(id)
   fluidPage(
     titlePanel("Registar plovila RH"),

@@ -38,13 +38,13 @@ ui <- dashboardPage(
   dashboardBody(
     tabItems(
       tabItem(tabName = "zemljisne_knjige",
-              MUI1_zemljisne_knjige("zemljisne_knjige1")
+              MUI_zemljisne_knjige("zemljisne_knjige1")
       ),
       tabItem(tabName = "registar_plovila",
-              MUI1_registar_plovila("registar_plovila1")
+              MUI_registar_plovila("registar_plovila1")
       ),
       tabItem(tabName = "forensis_dokument",
-              MUI1_forensis_dokument("forensis_dokument1")
+              MUI_forensis_dokument("forensis_dokument1")
       )
     )
   )
