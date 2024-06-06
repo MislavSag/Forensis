@@ -14,3 +14,6 @@
 
 #----------------------
 oib d Ivek 33169746051
+
+Notes:
+- quarto documents must contain `self-contained: true` to be included in shiny.
