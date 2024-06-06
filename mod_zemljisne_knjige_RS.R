@@ -25,7 +25,7 @@ MS_zemljisne_knjige_RS <- function(input, output, session) {
     req(input$search_term)
 
     # Dohvaćanje rezultata pretrage iz API-ja
-    zkrs_data <- load_zkrs(naziv = input$search_term)
+    zkrs_data <- zkrs(naziv = input$search_term)
     if (nrow(zkrs_data) == 0) return(NULL)
 
     return(zkrs_data)

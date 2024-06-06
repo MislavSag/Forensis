@@ -1,6 +1,12 @@
 ---
 title: "Forensis Dokument - proba"
-format: html
+format: 
+  html:
+    theme: "cosmo"
+    highlight-style: "github"
+    toc: true
+    toc-depth: 2
+    # self-contained: true
 ---
 
 ```{r setup, include=FALSE}

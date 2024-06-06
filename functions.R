@@ -1,14 +1,8 @@
-<<<<<<< HEAD
-# # Učitajte varijable okruženja
-# db_url <- Sys.getenv("db_url")
-# db_name <- Sys.getenv("db_name")
-# collection_name <- Sys.getenv("collection_name")
-=======
 # Učitajte varijable okruženja
 db_url <- Sys.getenv("db_url")
 db_name <- Sys.getenv("db_name")
 collection_name <- Sys.getenv("collection_name")
->>>>>>> 79f854708c4e8268762ef79d863e3bbd369cc1ca
+
 
 # Funkcija za dohvaćanje podataka iz API-ja
 zkrh <- function(search_term, part, history = "false", limit = 200, skip = 0) {
