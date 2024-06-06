@@ -32,7 +32,7 @@ MS_zemljisne_knjige <- function(input, output, session) {
     if (nrow(zkrh_data) == 0) return(NULL)
 
     # Dohvaćanje dokumenata iz MongoDB-a
-    mongo_data <- mongoDB(zkrh_data$id)
+    mongo_data <- mongoDB(zkrh_data$id, collection = collection_name, db = db_name, url = db_url)
 
     # Spajanje podataka
     final_data <- spoji_podatke(zkrh_data, mongo_data)
@@ -75,3 +75,4 @@ MS_zemljisne_knjige <- function(input, output, session) {
     }
   })
 }
+

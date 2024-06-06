@@ -1,10 +1,10 @@
-# mod_registar_plovila.R
+# mod_zemljisne_knjige_RS.R
 
 # UI funkcija za modul
-MUI_registar_plovila <- function(id) {
+MUI_zemljisne_knjige_RS <- function(id) {
   ns <- NS(id)
   fluidPage(
-    titlePanel("Pretraga plovila RH"),
+    titlePanel("Zemljišne knjige RS"),
     sidebarLayout(
       sidebarPanel(
         textInput(ns("search_term"), "Unesite naziv:", value = ""),
@@ -18,17 +18,17 @@ MUI_registar_plovila <- function(id) {
 }
 
 # Server funkcija za modul
-MS_registar_plovila <- function(input, output, session) {
+MS_zemljisne_knjige_RS <- function(input, output, session) {
   ns <- session$ns
 
   pretraga_rezultati <- eventReactive(input$search_button, {
     req(input$search_term)
 
-    # Dohvaćanje rezultata pretrage iz baze podataka
-    plovila_data <- loadData_plovila(input$search_term)
-    if (nrow(plovila_data) == 0) return(NULL)
+    # Dohvaćanje rezultata pretrage iz API-ja
+    zkrs_data <- load_zkrs(naziv = input$search_term)
+    if (nrow(zkrs_data) == 0) return(NULL)
 
-    return(plovila_data)
+    return(zkrs_data)
   })
 
   output$rezultati_tab <- renderUI({
@@ -43,7 +43,7 @@ MS_registar_plovila <- function(input, output, session) {
   output$results_table <- DT::renderDataTable({
     results <- pretraga_rezultati()
     if (!is.null(results) && nrow(results) > 0) {
-      MyDataTable(results)
+      DT_template(results)
     }
   })
 }
