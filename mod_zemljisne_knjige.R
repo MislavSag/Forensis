@@ -1,6 +1,6 @@
 # mod_zemljisne_knjige.R
 
-MUI1_zemljisne_knjige <- function(id) {
+MUI_zemljisne_knjige <- function(id) {
   ns <- NS(id)
   fluidPage(
     titlePanel("Zemljišne knjige RH"),
@@ -13,10 +13,11 @@ MUI1_zemljisne_knjige <- function(id) {
         radioButtons(ns("history"), "Povijest",
                      choices = list("Da" = "true", "Ne" = "false"),
                      selected = "true"),
+        sliderInput(ns("limit"), "Limit rezultata:", min = 50, max = 1000, value = 200, step = 50),
         actionButton(ns("pretraga"), "Pretraži", style = "width:100%;")
       ),
       mainPanel(
-        uiOutput(ns("rezultati_tab")) %>% withSpinner(type = 1, color = "#0dc5c1")
+        uiOutput(ns("rezultati_tab")) %>% withSpinner(type = 8, color = "#0dc5c1")
       )
     )
   )
@@ -27,14 +28,14 @@ MS_zemljisne_knjige <- function(input, output, session) {
     req(input$term)
 
     # Dohvaćanje rezultata pretrage iz API-ja
-    api_data <- zkrh(input$term, input$checkbox, input$history)
-    if (nrow(api_data) == 0) return(NULL)
+    zkrh_data <- zkrh(input$term, input$checkbox, input$history, limit = input$limit)
+    if (nrow(zkrh_data) == 0) return(NULL)
 
     # Dohvaćanje dokumenata iz MongoDB-a
-    mongo_data <- mongoDB(api_data$id)
+    mongo_data <- mongoDB(zkrh_data$id, collection = collection_name, db = db_name, url = db_url)
 
     # Spajanje podataka
-    final_data <- spoji_podatke(api_data, mongo_data)
+    final_data <- spoji_podatke(zkrh_data, mongo_data)
 
     # Ažuriranje URL-a
     base_url <- "https://oss.uredjenazemlja.hr/oss/public/reports/ldb-extract/"

@@ -1,7 +1,7 @@
 #-------------------------------------------------------------------------------
-#---------------------------# dac_hr_api funckija #-----------------------------
+#-------------------------------# zkrh funckija #-------------------------------
 
-dac_hr_api <- function(search_term, part, history = "false", limit = 50, skip = 0) {
+zkrh <- function(search_term, part, history = "false", limit = 50, skip = 0) {
   response <- GET("http://dac.hr/api/v1/query",
                   query = list(
                     q = search_term,
@@ -29,7 +29,7 @@ dac_hr_api <- function(search_term, part, history = "false", limit = 50, skip = 
 # u funckiju za shiny se id dodatno dijeli na inentifikatore koji služe za spajanje
 # podataka sa MongoDB dokumentima
 
-dac_dt <- dac_hr_api("62694367015", 0, history = "false")
+zkrh_dt <- zkrh("Darko Matić", 0, history = "false", limit = 20)
 
 #-------------------------------------------------------------------------------
 #------------------------# Izvlačenje url-a iz MongoDB #------------------------
@@ -344,7 +344,7 @@ library(microbenchmark)
 benchmark_result <- microbenchmark(
   old = get_doc_MongoDB_old(ids_50),
   new = get_doc_MongoDB_atlas(ids_50),
-  times = 20  # Broj ponavljanja testa za bolju statistiku
+  times = 3  # Broj ponavljanja testa za bolju statistiku
 )
 
 # Ispis rezultata
@@ -385,7 +385,7 @@ conn$disconnect()
 #-------------------------------# Testiranje Servera #--------------------------
 
 # TESTIRANJE FUNKCIJA U SERVERU
-api_data <- zkrh("62694367015", 0, "true") # 62694367015
+api_data <- zkrh("65012774291", 0, "false") # 62694367015
 
 ids <- c(api_data$id)
 
@@ -401,4 +401,74 @@ final_data[, fileUrl := ifelse(is.na(fileUrl), NA_character_, paste0(base_url, f
 final_data <- final_data[, .(id, type, unit, institution, book, status, burden, fileUrl)]
 
 #-------------------------------------------------------------------------------
+#--------------------------------# Benchmark zkrs #-----------------------------
 
+# uspoređuje se f1 koja koristi purrr paket i alternativa u kojoj se koristi
+# lapply funkcija - zaključak laplly je nešto brža, ali ću je definitivno koristiti
+# jer nije potrebno učitavati dodatan paket
+
+# Definicija funkcije f1
+f1 <- function(table = "zk_rs_vlasnici", naziv) {
+  db <- dbConnect(MySQL(), dbname = 'odvjet12_zk', host = options()$mysql$host,
+                  port = options()$mysql$port, user = options()$mysql$user,
+                  password = options()$mysql$password)
+  zk_input <- paste0("+", stringr::str_split(enc2utf8(naziv), pattern = " ")[[1]], collapse = " ")
+  query <- paste0("SELECT *, MATCH(vlasnik) AGAINST('", enc2utf8(zk_input), "' IN BOOLEAN MODE) AS score ",
+                  "FROM ", table, " ",
+                  "WHERE MATCH(vlasnik) AGAINST('", enc2utf8(zk_input),  "' IN BOOLEAN MODE) ",
+                  "ORDER BY score DESC ",
+                  "LIMIT 250;")
+  rs <- dbSendQuery(db, 'set character set "utf8"')
+  rs <- dbSendQuery(db, 'SET NAMES utf8')
+  data <- dbGetQuery(db, query)
+  dbDisconnect(db)
+  data <- map_dfr(data, function(x) {
+    if (is.character(x)) {
+      Encoding(x) <- "UTF-8"
+    }
+    x
+  })
+  return(data)
+}
+
+# Definicija funkcije f2
+f2 <- function(table = "zk_rs_vlasnici", naziv) {
+  db <- dbConnect(MySQL(), dbname = 'odvjet12_zk', host = options()$mysql$host,
+                  port = options()$mysql$port, user = options()$mysql$user,
+                  password = options()$mysql$password)
+  zk_input <- paste0("+", stringr::str_split(enc2utf8(naziv), pattern = " ")[[1]], collapse = " ")
+  query <- paste0("SELECT *, MATCH(vlasnik) AGAINST('", enc2utf8(zk_input), "' IN BOOLEAN MODE) AS score ",
+                  "FROM ", table, " ",
+                  "WHERE MATCH(vlasnik) AGAINST('", enc2utf8(zk_input),  "' IN BOOLEAN MODE) ",
+                  "ORDER BY score DESC ",
+                  "LIMIT 250;")
+  rs <- dbSendQuery(db, 'set character set "utf8"')
+  rs <- dbSendQuery(db, 'SET NAMES utf8')
+  data <- dbGetQuery(db, query)
+  dbDisconnect(db)
+
+  # Alternativa za map_dfr iz purrr paketa
+  data <- as.data.frame(lapply(data, function(x) {
+    if (is.character(x)) {
+      Encoding(x) <- "UTF-8"
+    }
+    x
+  }))
+
+  return(data)
+}
+
+
+library(microbenchmark)
+
+# Usporedba vremena izvršavanja
+benchmark_result <- microbenchmark(
+  old = f1(naziv = "Matić Matija"),
+  new = f2(naziv = "Matić Matija"),
+  times = 100  # Broj ponavljanja testa za bolju statistiku
+)
+
+# Ispis rezultata
+print(benchmark_result)
+
+#-------------------------------------------------------------------------------

@@ -1,10 +1,17 @@
+<<<<<<< HEAD
 # # Učitajte varijable okruženja
 # db_url <- Sys.getenv("db_url")
 # db_name <- Sys.getenv("db_name")
 # collection_name <- Sys.getenv("collection_name")
+=======
+# Učitajte varijable okruženja
+db_url <- Sys.getenv("db_url")
+db_name <- Sys.getenv("db_name")
+collection_name <- Sys.getenv("collection_name")
+>>>>>>> 79f854708c4e8268762ef79d863e3bbd369cc1ca
 
 # Funkcija za dohvaćanje podataka iz API-ja
-zkrh <- function(search_term, part, history = "false", limit = 50, skip = 0) {
+zkrh <- function(search_term, part, history = "false", limit = 200, skip = 0) {
   response <- GET("http://dac.hr/api/v1/query",
                   query = list(
                     q = search_term,
@@ -37,7 +44,7 @@ zkrh <- function(search_term, part, history = "false", limit = 50, skip = 0) {
 
 # funkcija sa dohvaćanje dokumenata iz MongoDB baze
 # koristi se atlas search (22.05.) koji je znatno skratio vrijeme dohvate docc
-mongoDB <- function(ids) {
+mongoDB <- function(ids, collection, db, url) {
   conn <- mongo(collection = collection_name, db = db_name, url = db_url)
 
   conditions <- lapply(ids, function(id) {
@@ -109,3 +116,118 @@ spoji_podatke <- function(api_data, mongo_data) {
 
   return(spojena_tablica)
 }
+
+# ovo je za pristup MySql bazi
+options(mysql = list(
+  "host" = "91.234.46.219",
+  "port" = 3306L,
+  "user" = "odvjet12_mislav",
+  "password" = "Contentio0207"
+))
+
+# Ovo je za Zemljišne knjige RS
+zkrs <- function(table = "zk_rs_vlasnici", naziv) {
+  db <- dbConnect(MySQL(), dbname = 'odvjet12_zk', host = options()$mysql$host,
+                  port = options()$mysql$port, user = options()$mysql$user,
+                  password = options()$mysql$password)
+  zk_input <- paste0("+", stringr::str_split(enc2utf8(naziv), pattern = " ")[[1]], collapse = " ")
+  query <- paste0("SELECT *, MATCH(vlasnik) AGAINST('", enc2utf8(zk_input), "' IN BOOLEAN MODE) AS score ",
+                  "FROM ", table, " ",
+                  "WHERE MATCH(vlasnik) AGAINST('", enc2utf8(zk_input),  "' IN BOOLEAN MODE) ",
+                  "ORDER BY score DESC ",
+                  "LIMIT 250;")
+  rs <- dbSendQuery(db, 'set character set "utf8"')
+  rs <- dbSendQuery(db, 'SET NAMES utf8')
+  data <- dbGetQuery(db, query)
+  dbDisconnect(db)
+
+  # Alternativa za map_dfr iz purrr paketa
+  data <- as.data.frame(lapply(data, function(x) {
+    if (is.character(x)) {
+      Encoding(x) <- "UTF-8"
+    }
+    x
+  }))
+
+  return(data)
+}
+
+DT_template <- function(df) {
+  datatable(df,
+            rownames = FALSE,
+            escape = FALSE,
+            extensions = 'Buttons',
+            options = list(dom = 'Blfrtip',
+                           pageLength = 5,
+                           buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                           lengthMenu = list(c(10,25,50,-1), c(10,25,50,"All"))))
+}
+
+
+# ovo je za plovila
+# functions_plovila.R
+
+# Funkcija za povlacenje podataka o plovilima
+loadData_plovila <- function(naziv) {
+  # Connect to the database
+  db <- dbConnect(MySQL(), dbname = 'odvjet12_plovila', host = options()$mysql$host,
+                  port = options()$mysql$port, user = options()$mysql$user,
+                  password = options()$mysql$password)
+  # Construct the fetching query
+  query <- paste0("SELECT * FROM plovila_all WHERE vlasnik LIKE '%", enc2utf8(naziv), "%'")
+
+  # Submit the fetch query and disconnect
+  rs <- dbSendQuery(db, 'set character set "utf8"')
+  rs <- dbSendQuery(db, 'SET NAMES utf8')
+  data <- dbGetQuery(db, query)
+  dbDisconnect(db)
+  data <- as.data.frame(lapply(data, function(x) {
+    if (is.character(x)) {
+      Encoding(x) <- "UTF-8"
+    }
+    x
+  }))
+
+  return(data)
+}
+
+# Funkcija za ažuriranje broja upita korisnika
+updateData <- function(broj, user) {
+  # Connect to the database
+  db <- dbConnect(RMySQL::MySQL(), dbname = databaseName, host = options()$mysql$host,
+                  port = options()$mysql$port, user = options()$mysql$user,
+                  password = options()$mysql$password)
+  # Construct the update query by looping over the data fields
+  query <- sprintf(
+    "UPDATE users SET upiti = %d WHERE user = '%s';", broj - 1L, user
+  )
+  # Submit the update query and disconnect
+  dbSendQuery(db, 'set character set "utf8"')
+  dbSendQuery(db, 'SET NAMES utf8')
+  dbGetQuery(db, query)
+  dbDisconnect(db)
+}
+
+# Funkcija za odabir stupaca
+sel <- function(x, y){
+  kolona_izbor <- list()
+  for (i in 1:length(y)){
+    kolona_izbor[[i]] <- which(colnames(x) == y[[i]])
+  }
+  kolona_izbor <- unlist(kolona_izbor)
+  return(kolona_izbor)
+}
+
+# Funkcija za formatiranje tablice za prikaz
+MyDataTable <- function(dataset, escape = FALSE, selection = 'row', ordring_log = FALSE, filename = "zk"){
+  my_DT <- DT::datatable(dataset, rownames = FALSE, extensions = c('Buttons', "FixedHeader"), escape = escape,
+                         selection = list(target = selection),
+                         options = list(paging = FALSE, ordering = ordring_log, dom = 'Brt', scrollX = TRUE,
+                                        pageLength = 50,
+                                        buttons = list('copy', list(extend = 'csv', filename = filename),
+                                                       list(extend = 'excel', filename = filename),
+                                                       list(extend = 'pdf', filename = filename), 'print',
+                                                       list(extend = 'colvis', columns = c(1:(ncol(dataset)-1))))))
+  return(my_DT)
+}
+

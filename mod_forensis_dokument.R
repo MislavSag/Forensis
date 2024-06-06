@@ -1,14 +1,22 @@
+
 # mod_forensis_dokument.R
 
-MUI1_forensis_dokument <- function(id) {
+MUI_forensis_dokument <- function(id) {
   ns <- NS(id)
   fluidPage(
-    titlePanel("Forensis dokument"),
-    # Prazno mjesto za buduću funkcionalnost
-    p("Ovdje će biti funkcionalnost za Forensis dokument.")
+    titlePanel("Forensis Dokument"),
+    sidebarLayout(
+      sidebarPanel(
+        # Dodajte potrebne UI elemente ovdje
+      ),
+      mainPanel(
+        # Dodajte potrebne UI elemente ovdje
+      )
+    )
   )
 }
 
 MS_forensis_dokument <- function(input, output, session) {
-  # Logika za Forensis dokument će doći ovdje
+  # Dodajte potrebnu server logiku ovdje
 }
+

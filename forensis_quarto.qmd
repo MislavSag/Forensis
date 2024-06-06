@@ -1,0 +1,26 @@
+---
+title: "Forensis Dokument - proba"
+format: html
+---
+
+```{r setup, include=FALSE}
+# Učitavanje potrebnih paketa
+library(data.table)
+library(DT)
+
+# Kreiranje osnovnih podataka
+final_data <- data.table(
+  ID = c("1", "2", "3"),
+  Name = c("John Doe", "Jane Doe", "Jim Beam"),
+  Age = c(30, 25, 35)
+)
+```
+
+```{r, echo=FALSE}
+# Prikaz podataka u tabličnom obliku
+datatable(final_data, options = list(
+  pageLength = 10
+))
+
+```
+
