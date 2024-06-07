@@ -43,7 +43,7 @@ MS_registar_plovila <- function(input, output, session) {
   output$results_table <- DT::renderDataTable({
     results <- pretraga_rezultati()
     if (!is.null(results) && nrow(results) > 0) {
-      MyDataTable(results)
+      DT_plovila(results)
     }
   })
 }
