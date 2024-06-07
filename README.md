@@ -9,11 +9,9 @@
 - u isto vrijeme da se prikazuje u app i da se skida na gumb
 - za izvještaj pogledati modul_forensic_report_persons
 
+# Functions skripta
+- updateData i sel funkcije - kada se koriste ?
 
 
-
-#----------------------
-oib d Ivek 33169746051
-
-Notes:
+# Notes:
 - quarto documents must contain `self-contained: true` to be included in shiny.

@@ -212,12 +212,13 @@ sel <- function(x, y){
   return(kolona_izbor)
 }
 
-# Funkcija za formatiranje tablice za prikaz
-MyDataTable <- function(dataset, escape = FALSE, selection = 'row', ordring_log = FALSE, filename = "zk"){
+# Template za DT plovila
+DT_plovila <- function(dataset, escape = FALSE, selection = 'row', ordring_log = FALSE, filename = "zk"){
   my_DT <- DT::datatable(dataset, rownames = FALSE, extensions = c('Buttons', "FixedHeader"), escape = escape,
                          selection = list(target = selection),
-                         options = list(paging = FALSE, ordering = ordring_log, dom = 'Brt', scrollX = TRUE,
-                                        pageLength = 50,
+                         options = list(paging = TRUE, ordering = ordring_log, dom = 'Blfrtip', scrollX = TRUE,
+                                        pageLength = 10,  # Prikazivanje 10 unosa po stranici
+                                        lengthMenu = list(c(10, 25, 50, -1), c('10', '25', '50', 'All')),  # Opcije za "show entries"
                                         buttons = list('copy', list(extend = 'csv', filename = filename),
                                                        list(extend = 'excel', filename = filename),
                                                        list(extend = 'pdf', filename = filename), 'print',
