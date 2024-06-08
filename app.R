@@ -15,6 +15,11 @@ library(RMySQL)
 library(stringr)
 
 
+# ADDED -------------------------------------------------------------------
+# Add resource path for Quarto HTML file
+addResourcePath("my_resource", "reports")
+# ADDED -------------------------------------------------------------------
+
 # Učitavanje zasebnih skripti
 source("functions.R")
 source("mod_zemljisne_knjige.R")

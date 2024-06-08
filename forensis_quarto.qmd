@@ -2,6 +2,10 @@
 title: "Forensis Dokument"
 format: 
   html:
+    theme: "cosmo"
+    highlight-style: "github"
+    toc: true
+    toc-depth: 2
     self-contained: true
 ---
 
