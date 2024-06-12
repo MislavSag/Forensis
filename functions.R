@@ -226,3 +226,17 @@ DT_plovila <- function(dataset, escape = FALSE, selection = 'row', ordring_log =
   return(my_DT)
 }
 
+# Provjera oib-a
+oib_checker <- function(oib_vector){
+  ostatak <- rep(0, 10)
+  for (i in 1:10){
+    iso <- as.integer(substr(oib_vector, i, i)) + 10 + ifelse(i > 1, ostatak[i-1], 0)
+    iso <- ifelse((iso %% 10) == 0, 10, iso %% 10)
+    iso <- iso * 2
+    ostatak[i] <- iso %% 11
+  }
+  kontrolna <- ifelse((11 %% ostatak[10]) == 0, 0, 11 - ostatak[10])
+  oib_chech <- ifelse(kontrolna == as.integer(substr(oib_vector, 11, 11)), 1, 0)
+  return(oib_chech)
+}
+
