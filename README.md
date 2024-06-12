@@ -10,5 +10,5 @@
 
 # Pitanja
 
-- pretražuju li se plovila i zemljišne knjige RS preko oib-a ?
-- oib_checker mi daje 1 za 18710011268 (točan oib) i 1871001126811111 (ili bilo koji drugi nastavak brojeva nakon točnog oib-a)
+-pretražuju li se plovila preko oib-a ?
+-   oib_checker mi daje 1 za 18710011268 (točan oib) i 1871001126811111 (ili bilo koji drugi nastavak brojeva nakon točnog oib-a)
