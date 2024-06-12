@@ -1,5 +1,5 @@
 ---
-title: "Forensis Dokument"
+title: "OIB: `r params$oib`"
 format: 
   html:
     theme: "cosmo"
@@ -7,6 +7,8 @@ format:
     toc: true
     toc-depth: 2
     self-contained: true
+params:
+  oib: "18710011268" # Default vrijednost
 ---
 
 ```{r setup, include=FALSE}
@@ -24,21 +26,25 @@ library(quarto)
 library(RMySQL)
 library(stringr)
 
-
 # Učitavanje zasebnih skripti
 source("functions.R")
 
+# Postavljanje globalnih opcija za prikaz koda i upozorenja
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+# parametar 'oib' iz Quarto dokumenta
+oib <- params$oib
 ```
 
 
-```{r, echo = FALSE}
-# Primjer OIB-a za pretragu
-oib <- "62694367015"
+
+## Zemljišne knjige RH
+```{r zkrh}
 
 # Učitajte podatke iz zemljišnih knjiga prema OIB-u
 zkrh_data <- zkrh(oib, part = 0)
 if (nrow(zkrh_data) == 0) {
-  final_data <- data.table()
+  cat(paste("Nema rezultata u zemljišnim knjigama"))
 } else {
   # Dohvaćanje dokumenata iz MongoDB-a
   mongo_data <- mongoDB(zkrh_data$id, collection = collection_name, db = db_name, url = db_url)
@@ -54,23 +60,74 @@ if (nrow(zkrh_data) == 0) {
   final_data <- final_data[, .(id, type, unit, institution, book, status, burden, fileUrl)]
   setnames(final_data, old = c("id", "type", "unit", "institution", "book", "status", "burden", "fileUrl"),
            new = c("ID", "Vrsta knjige", "Broj zemljišta (kat. čestice)", "Općinski sud / ZK odjel", "Glavna knjiga", "Status", "Teret", "Link"))
-}
 
-# Prikaz rezultata
-datatable(final_data, escape = FALSE, options = list(
-  pageLength = 5,
-  columnDefs = list(
-    list(
-      targets = ncol(final_data),  # Indeks stupca 'Link'
-      render = JS(
-        "function(data, type, row, meta) {",
-        "return type === 'display' && data ? '<a href=\"' + data + '\" target=\"_blank\">Open</a>' : data;",
-        "}"
+  # Prikaz rezultata
+  datatable(final_data, escape = FALSE, options = list(
+    pageLength = 5,
+    columnDefs = list(
+      list(
+        targets = ncol(final_data),  # Indeks stupca 'Link'
+        render = JS(
+          "function(data, type, row, meta) {",
+          "return type === 'display' && data ? '<a href=\"' + data + '\" target=\"_blank\">Open</a>' : data;",
+          "}"
+        )
       )
     )
-  )
-))
+  ))
+}
 
+```
 
+## Plovila RH
+```{r plovila}
+
+# Dohvaćanje rezultata pretrage iz baze podataka za plovila
+plovila_data <- loadData_plovila(oib)
+if (nrow(plovila_data) == 0) {
+  cat(paste("Nema rezultata u registru plovila."))
+} else {
+  final_plovila <- plovila_data
+  # Prikaz rezultata
+  datatable(final_plovila, escape = FALSE, options = list(
+    pageLength = 5,
+    columnDefs = list(
+      list(
+        targets = "_all",
+        render = JS(
+          "function(data, type, row, meta) {",
+          "return type === 'display' && data ? data : data;",
+          "}"
+        )
+      )
+    )
+  ))
+}
+
+```
+
+## Zemljišne knjige RS
+```{r zkrs}
+
+# Dohvaćanje rezultata pretrage iz baze podataka za zemljišne knjige RS
+zkrs_data <- zkrs(naziv = oib)
+if (nrow(zkrs_data) == 0) {
+  cat(paste("Nema rezultata pretrage u zemljišnim knjigama RS"))
+} else {
+  # Prikaz rezultata
+  datatable(zkrs_data, escape = FALSE, options = list(
+    pageLength = 5,
+    columnDefs = list(
+      list(
+        targets = "_all",
+        render = JS(
+          "function(data, type, row, meta) {",
+          "return type === 'display' && data ? data : data;",
+          "}"
+        )
+      )
+    )
+  ))
+}
 ```
 
