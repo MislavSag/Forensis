@@ -10,6 +10,7 @@ library(data.table)
 library(shinydashboard)
 library(mongolite)
 library(shinycssloaders) # ovo je za spinera kod pretraživanja / maknuti ?
+library(shinyjs) # ovo je da spinner bude nevidljiv kod forensis dok
 library(quarto)
 library(RMySQL)
 library(stringr)
@@ -36,7 +37,7 @@ ui <- dashboardPage(
       menuItem("Zemljišne knjige RH", tabName = "zemljisne_knjige", icon = icon("book")),
       menuItem("Registar plovila RH", tabName = "registar_plovila", icon = icon("ship")),
       menuItem("Forensis dokument", tabName = "forensis_dokument", icon = icon("file-alt")),
-      menuItem("Zemljišne knjige RS", tabName = "zemljisne_knjige_RS", icon = icon("book"))  # Dodavanje novog modula
+      menuItem("Zemljišne knjige RS", tabName = "zemljisne_knjige_RS", icon = icon("book"))
     ),
     collapsible = TRUE,
     collapsed = TRUE
@@ -66,7 +67,7 @@ server <- function(input, output, session) {
   callModule(MS_zemljisne_knjige, "zemljisne_knjige")
   callModule(MS_registar_plovila, "registar_plovila")
   callModule(MS_forensis_dokument, "forensis_dokument")
-  callModule(MS_zemljisne_knjige_RS, "zemljisne_knjige_RS")  # Server funkcija za novi modul
+  callModule(MS_zemljisne_knjige_RS, "zemljisne_knjige_RS")
 }
 
 #-------------------------------------------------------------------------------

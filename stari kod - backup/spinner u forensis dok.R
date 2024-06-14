@@ -1,18 +1,23 @@
+# Ovo je neka ideja za spinner. Međutim jednostavno ne radi. Po meni je problem
+# na tragu show(id = "spinner_div")
+
 # mod_forensis_dokument.R
 
 MUI_forensis_dokument <- function(id) {
   ns <- NS(id)
   fluidPage(
+    useShinyjs(),  # Inicijalizirajte shinyjs
     titlePanel("Forensis Dokument"),
     sidebarLayout(
       sidebarPanel(
         textInput(ns("oib"), "Unesite OIB:", value = ""),
         textInput(ns("ime_prezime"), "Unesite Ime i Prezime (opcionalno):", value = ""),
         actionButton(ns("render_btn"), "Generiraj dokument"),
-        uiOutput(ns("download_ui")) # Koristimo uiOutput za dinamički prikaz gumba
+        hidden(div(id = ns("download_ui_div"), uiOutput(ns("download_ui"))))  # Sakrij gumb za preuzimanje
       ),
       mainPanel(
-        uiOutput(ns("html_output"))
+        hidden(div(id = ns("spinner_div"), withSpinner(div(), color = "#0dc5c1"))),  # Dodaj spinner kao zaseban div
+        uiOutput(ns("html_output"))  # Prikaži html_output
       )
     )
   )
@@ -23,6 +28,11 @@ MS_forensis_dokument <- function(input, output, session) {
 
   observeEvent(input$render_btn, {
     req(input$oib)
+
+    # Prikaz spinnera i sakrivanje output-a na početku
+    shinyjs::show(id = "spinner_div")
+    shinyjs::hide(id = "html_output")
+    shinyjs::hide(id = "download_ui_div")
 
     ime_prezime <- input$ime_prezime
 
@@ -48,9 +58,13 @@ MS_forensis_dokument <- function(input, output, session) {
     render_command <- paste('quarto render forensis_quarto.qmd --execute-params', param_file, '--output-dir reports')
     system(render_command, wait = TRUE) # čekanje da se renderiranje završi
 
+    # Sakrivanje spinnera i prikaz output-a nakon završetka renderiranja
+    shinyjs::hide(id = "spinner_div")
+    shinyjs::show(id = "html_output")
+    shinyjs::show(id = "download_ui_div")
+
     # Ažurirati iframe za prikaz generiranog dokumenta
     output$html_output <- renderUI({
-      invalidateLater(180000, session) # Provjeri promjene svakih 3 minute (180000 ms)
       tags$iframe(style = "height:1000px; width:100%", src = "my_resource/forensis_quarto.html")
     })
 

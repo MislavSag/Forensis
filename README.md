@@ -1,46 +1,34 @@
-# Functions skripta
+# Notes
 
--   updateData i sel funkcije - kada se koriste ?
-
-# Quarto:
+## Quarto:
 
 -   YAML - `self-contained: true` - ne kreira poseban folder sa quarto_files
 -   rendering se vrši sa `system()` - terminal
 -   parametri koji su spremljeni u .yml file trebaju zapoćinjati bez "parms:"
 
-# Pitanja
-
--pretražuju li se plovila preko oib-a ?
--   oib_checker mi daje 1 za 18710011268 (točan oib) i 1871001126811111 (ili bilo koji drugi nastavak brojeva nakon točnog oib-a)
-
 # TODO
 
+## Završeno
+- gumb "preuzmi dokument" - nakon prikaza u aplikaciji i zelene boje
+- povećan je iframe
+- u sql bazi "fizicke_osobe" dodana varijabla datumrodenja_korigirano (datumrodjenja + 1 dan) i varijabla ime_prezime da se ne moraju naknadno spajati ime + prezime
+- dodatni text input za ime_prezime - koristi se u pretrazi svih baza, a ako nije uneseno, povlaće se podaci sa funkcijom loadDataFiz
+
+## Pitanja
+- trebam li plovila RH pretraživati samo po ime_prezime ili i po oib-u ?
+- da ubacim oib checker ? Našao sam jedan mali problem:
+oib_checker mi daje 1 za 18710011268 (točan oib) i 1871001126811111 (ili bilo koji drugi nastavak brojeva nakon točnog oib-a)
+-   updateData i sel funkcije (functions.R skripta) - kada se koriste ? (Ovo možemo proći nabrzinu uzivo iz starog forensis koda. Mislio sam da ću koristiti te funkcije u novoj aplikaciji)
+
+## Problemi
+- ne mogu napraviti spinner u forensis dokument modulu. Jednostavan spinner radi u modulu zemljišne knjige RH.
+- sigurno je potrebno koristiti shinyjs paket koji omogućuje sakrivanje i prikaz elemenata i nekih zanimljivih funkcija iz java scripta
+- uz pomoć GPT-ja napravio sam neki kod, ali ne mogu ga završiti kako treba
+- pokušaji su bili sljedeći: (1) spinner se vrti cijelo vrijeme i prije nego se upišu podaci i stisne gumb "generiraj dokument"; (2) Ima spinera i nema html outputa (shvatio sam da je zbog hide komande); (3) ovu verziju sam stavio u posebnu skriptu pa se mozda moze doraditi - html se prikazuje, sve radi, ali nema spinnera iako je stavljen u kod
+
+
 ## Forensic report
-
-- gumb "Preuzmi dokument" se pojavljuje nakon generiranje dokumenta. Moze biti zelene boje
-- povećao bi height of iframe-a da se vidi veći dio dokumenta
-- dodati  shiny loadere, da korisnik zna da se nešto događa kada klikne preuzmi izvještaj. Postoji primjer u mom kodu. Iako od onda vjerojatno postoji još novih paketa. Na primjer brzo guglanje: https://github.com/daattali/shinycssloaders
-- dodati html text input ime i prezime koji je opcionalan. Ako se upiše ime i prezime, ono se koristi u pretrazi RS, Federacije, plovila i eventualnih drugi pretraga. Ako se ime i prezime ostavi prazno, povlači se ime i prezime iz nađe baze. Primer povlačenja imena i prezimena iz naše baze dostupan je u mom koduČ
-
-```
-loadDataFiz <- function(oibreqFiz) {
-  # Connect to the database
-  db <- dbConnect(MySQL(), dbname = "odvjet12_fizicke", host = options()$mysql$host, 
-                  port = as.integer(options()$mysql$port), user = options()$mysql$user, 
-                  password = options()$mysql$password)
-  # Construct the fetching query
-  query <- sprintf("SELECT * FROM %s WHERE oib = '%s'", table_load, oibreqFiz)
-  # Submit the fetch query and disconnect
-  rs <- dbSendQuery(db, 'set character set "utf8"')
-  rs <- dbSendQuery(db, 'SET NAMES utf8')
-  data <- dbGetQuery(db, query)
-  dbDisconnect(db)
-  data
-}
-
-```
-
-- nekretnine bi se trebale pretraživati po OIB-u i imenu i prezimenu (dvije pretrage). Postoji još jedna malo složenija pretraga koju bi dodao, ali to možemo u drugoj fazi.
+Postoji još jedna malo složenija pretraga koju bi dodao, ali to možemo u drugoj fazi.
 - implementirati pretagu sudskog registra - provjera pravnih funkcija u poslovnim subjektima. Primjer je u mom kodu:
 
 ```

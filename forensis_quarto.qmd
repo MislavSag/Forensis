@@ -1,5 +1,5 @@
 ---
-title: "OIB: `r params$oib`"
+title: "Forensis dokument"
 format: 
   html:
     theme: "cosmo"
@@ -9,6 +9,7 @@ format:
     self-contained: true
 params:
   oib: "18710011268" # Default vrijednost
+  ime_prezime: "NA"
 ---
 
 ```{r setup, include=FALSE}
@@ -34,12 +35,17 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 
 # parametar 'oib' iz Quarto dokumenta
 oib <- params$oib
+ime_prezime <- params$ime_prezime
 ```
 
+# Podaci
 
+Prikazuju se podaci za: **OIB: `r params$oib`** i **Ime i Prezime: `r params$ime_prezime`**.
 
-## Zemljišne knjige RH
-```{r zkrh}
+U nastavku su prikazani podaci iz zemljišnih knjiga RH, RS i BIH te baze plovila RH.
+
+## Zemljišne knjige RH po oib-u
+```{r zkrh oib}
 
 # Učitajte podatke iz zemljišnih knjiga prema OIB-u
 zkrh_data <- zkrh(oib, part = 0)
@@ -79,8 +85,50 @@ if (nrow(zkrh_data) == 0) {
 
 ```
 
-## Plovila RH
-```{r plovila}
+## Zemljišne knjige RH po imenu i prezimenu
+```{r zkrh ime_prezime}
+
+# Učitajte podatke iz zemljišnih knjiga prema OIB-u
+zkrh_data <- zkrh(ime_prezime, part = 0)
+if (nrow(zkrh_data) == 0) {
+  cat(paste("Nema rezultata u zemljišnim knjigama"))
+} else {
+  # Dohvaćanje dokumenata iz MongoDB-a
+  mongo_data <- mongoDB(zkrh_data$id, collection = collection_name, db = db_name, url = db_url)
+
+  # Spajanje podataka
+  final_data <- spoji_podatke(zkrh_data, mongo_data)
+
+  # Ažuriranje URL-a
+  base_url <- "https://oss.uredjenazemlja.hr/oss/public/reports/ldb-extract/"
+  final_data[, fileUrl := ifelse(is.na(fileUrl), NA_character_, paste0(base_url, fileUrl))]
+
+  # Odabir potrebnih varijabli i promjena imena stupaca
+  final_data <- final_data[, .(id, type, unit, institution, book, status, burden, fileUrl)]
+  setnames(final_data, old = c("id", "type", "unit", "institution", "book", "status", "burden", "fileUrl"),
+           new = c("ID", "Vrsta knjige", "Broj zemljišta (kat. čestice)", "Općinski sud / ZK odjel", "Glavna knjiga", "Status", "Teret", "Link"))
+
+  # Prikaz rezultata
+  datatable(final_data, escape = FALSE, options = list(
+    pageLength = 5,
+    columnDefs = list(
+      list(
+        targets = ncol(final_data),  # Indeks stupca 'Link'
+        render = JS(
+          "function(data, type, row, meta) {",
+          "return type === 'display' && data ? '<a href=\"' + data + '\" target=\"_blank\">Open</a>' : data;",
+          "}"
+        )
+      )
+    )
+  ))
+}
+
+```
+
+
+## Plovila RH po oib-u
+```{r plovila oib}
 
 # Dohvaćanje rezultata pretrage iz baze podataka za plovila
 plovila_data <- loadData_plovila(oib)
@@ -106,8 +154,35 @@ if (nrow(plovila_data) == 0) {
 
 ```
 
-## Zemljišne knjige RS
-```{r zkrs}
+## Plovila RH po imenu i prezimenu
+```{r plovila ime_prezime}
+
+# Dohvaćanje rezultata pretrage iz baze podataka za plovila
+plovila_data <- loadData_plovila(ime_prezime)
+if (nrow(plovila_data) == 0) {
+  cat(paste("Nema rezultata u registru plovila."))
+} else {
+  final_plovila <- plovila_data
+  # Prikaz rezultata
+  datatable(final_plovila, escape = FALSE, options = list(
+    pageLength = 5,
+    columnDefs = list(
+      list(
+        targets = "_all",
+        render = JS(
+          "function(data, type, row, meta) {",
+          "return type === 'display' && data ? data : data;",
+          "}"
+        )
+      )
+    )
+  ))
+}
+
+```
+
+## Zemljišne knjige RS po oib-u
+```{r zkrs oib}
 
 # Dohvaćanje rezultata pretrage iz baze podataka za zemljišne knjige RS
 zkrs_data <- zkrs(naziv = oib)
@@ -131,3 +206,27 @@ if (nrow(zkrs_data) == 0) {
 }
 ```
 
+## Zemljišne knjige RS po imenu i prezimenu
+```{r zkrs ime_prezime}
+
+# Dohvaćanje rezultata pretrage iz baze podataka za zemljišne knjige RS
+zkrs_data <- zkrs(naziv = ime_prezime)
+if (nrow(zkrs_data) == 0) {
+  cat(paste("Nema rezultata pretrage u zemljišnim knjigama RS"))
+} else {
+  # Prikaz rezultata
+  datatable(zkrs_data, escape = FALSE, options = list(
+    pageLength = 5,
+    columnDefs = list(
+      list(
+        targets = "_all",
+        render = JS(
+          "function(data, type, row, meta) {",
+          "return type === 'display' && data ? data : data;",
+          "}"
+        )
+      )
+    )
+  ))
+}
+```

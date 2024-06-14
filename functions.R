@@ -240,3 +240,18 @@ oib_checker <- function(oib_vector){
   return(oib_chech)
 }
 
+# Ovo je
+loadDataFiz <- function(oibreqFiz) {
+  # Connect to the database
+  db <- dbConnect(MySQL(), dbname = "odvjet12_fizicke", host = options()$mysql$host,
+                  port = as.integer(options()$mysql$port), user = options()$mysql$user,
+                  password = options()$mysql$password)
+  # Construct the fetching query
+  query <- sprintf("SELECT * FROM %s WHERE oib = '%s'", "fizicke_osobe", oibreqFiz)
+  # Submit the fetch query and disconnect
+  rs <- dbSendQuery(db, 'set character set "utf8"')
+  rs <- dbSendQuery(db, 'SET NAMES utf8')
+  data <- dbGetQuery(db, query)
+  dbDisconnect(db)
+  data
+}

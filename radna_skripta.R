@@ -472,3 +472,35 @@ benchmark_result <- microbenchmark(
 print(benchmark_result)
 
 #-------------------------------------------------------------------------------
+#----------------------------------# MSQL baza #--------------------------------
+
+# library(RMySQL)
+
+# Povezivanje na bazu podataka
+db <- dbConnect(MySQL(), dbname = "odvjet12_fizicke", host = options()$mysql$host,
+                port = as.integer(options()$mysql$port), user = options()$mysql$user,
+                password = options()$mysql$password)
+
+# Dohvaćanje popisa baza podataka
+databases <- dbGetQuery(db, "SHOW DATABASES;")
+
+# Ovo je za bazu fizičke_osobe
+# Dohvaćanje strukture tablice
+table_structure <- dbGetQuery(db, "DESCRIBE fizicke_osobe")
+
+# Dodavanje novog stupca datumrodenja_korigirano
+query_add_column <- "ALTER TABLE fizicke_osobe ADD COLUMN datumrodenja_korigirano DATE"
+dbExecute(db, query_add_column)
+
+# Ažuriranje novog stupca s datumrodenja + 1 dan
+query_update_column <- "UPDATE fizicke_osobe SET datumrodenja_korigirano = DATE_ADD(datumrodenja, INTERVAL 1 DAY)"
+dbExecute(db, query_update_column)
+
+### Dodajem novi stupac ime_prezime da to ne moram raditi nakon što se pronađe oib
+dbExecute(db, "ALTER TABLE fizicke_osobe ADD COLUMN ime_prezime VARCHAR(255)")
+dbExecute(db, "UPDATE fizicke_osobe SET ime_prezime = CONCAT(ime, ' ', prezime)")
+
+# Prekid veze
+dbDisconnect(db)
+
+#-------------------------------------------------------------------------------
