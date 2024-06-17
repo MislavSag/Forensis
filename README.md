@@ -21,11 +21,12 @@ oib_checker mi daje 1 za 18710011268 (točan oib) i 1871001126811111 (ili bilo k
 -   updateData i sel funkcije (functions.R skripta) - kada se koriste ? (Ovo možemo proći nabrzinu uzivo iz starog forensis koda. Mislio sam da ću koristiti te funkcije u novoj aplikaciji)
 
 ## Problemi
-- ne mogu napraviti spinner u forensis dokument modulu. Jednostavan spinner radi u modulu zemljišne knjige RH.
-- sigurno je potrebno koristiti shinyjs paket koji omogućuje sakrivanje i prikaz elemenata i nekih zanimljivih funkcija iz java scripta
-- uz pomoć GPT-ja napravio sam neki kod, ali ne mogu ga završiti kako treba
-- pokušaji su bili sljedeći: (1) spinner se vrti cijelo vrijeme i prije nego se upišu podaci i stisne gumb "generiraj dokument"; (2) Ima spinera i nema html outputa (shvatio sam da je zbog hide komande); (3) ovu verziju sam stavio u posebnu skriptu pa se mozda moze doraditi - html se prikazuje, sve radi, ali nema spinnera iako je stavljen u kod
+- [x] ne mogu napraviti spinner u forensis dokument modulu. Jednostavan spinner radi u modulu zemljišne knjige RH.
+- [x] sigurno je potrebno koristiti shinyjs paket koji omogućuje sakrivanje i prikaz elemenata i nekih zanimljivih funkcija iz java scripta
+- [x] uz pomoć GPT-ja napravio sam neki kod, ali ne mogu ga završiti kako treba
+- [x] pokušaji su bili sljedeći: (1) spinner se vrti cijelo vrijeme i prije nego se upišu podaci i stisne gumb "generiraj dokument"; (2) Ima spinera i nema html outputa (shvatio sam da je zbog hide komande); (3) ovu verziju sam stavio u posebnu skriptu pa se mozda moze doraditi - html se prikazuje, sve radi, ali nema spinnera iako je stavljen u kod
 
+(mislav) - mislim da je ovo rijsenoe
 
 ## Forensic report
 Postoji još jedna malo složenija pretraga koju bi dodao, ali to možemo u drugoj fazi.
