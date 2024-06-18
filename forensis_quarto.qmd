@@ -22,7 +22,7 @@ library(jsonlite)
 library(data.table)
 library(shinydashboard)
 library(mongolite)
-library(shinycssloaders) # ovo je za spinera kod pretraživanja / maknuti ?
+library(shinycssloaders)
 library(quarto)
 library(RMySQL)
 library(stringr)
@@ -42,7 +42,40 @@ ime_prezime <- params$ime_prezime
 
 Prikazuju se podaci za: **OIB: `r params$oib`** i **Ime i Prezime: `r params$ime_prezime`**.
 
-U nastavku su prikazani podaci iz zemljišnih knjiga RH, RS i BIH te baze plovila RH.
+U nastavku je prikazan status zdravstvenog osiguranja, poslovne funkcije u poduzećima, te podaci iz zemljišnih knjiga RH, RS i Federacije te baza plovila RH.
+
+## Status zdravstvenog osiguranja
+
+```{r zdrav}
+
+# Dohvati podatke o osiguranju
+osig_data <- zdravstveno(oib)
+
+# Prikaz rezultata kao datatable
+if (nrow(osig_data) == 0) {
+  cat("Nema rezultata o zdravstvenom osiguranju")
+} else {
+  # Prikaz rezultata u tablici
+  datatable(osig_data)
+}
+
+```
+
+## Poslovne funkcije u poduzećima
+```{r poslovne funkcije}
+
+# Poziv funkcije s primjerom OIB-a
+poslovneFunk_data <- poslovne_funkcije(oib)
+
+# Prikaz rezultata kao datatable
+# Provjeri ima li podataka
+if (nrow(poslovneFunk_data) == 0) {
+  cat("Nema rezultata o poslovnim funkcijama u poduzećima")
+} else {
+  # Prikaz rezultata u tablici
+  datatable(poslovneFunk_data)
+}
+```
 
 ## Zemljišne knjige RH po oib-u
 ```{r zkrh oib}
@@ -181,31 +214,6 @@ if (nrow(plovila_data) == 0) {
 
 ```
 
-## Zemljišne knjige RS po oib-u
-```{r zkrs oib}
-
-# Dohvaćanje rezultata pretrage iz baze podataka za zemljišne knjige RS
-zkrs_data <- zkrs(naziv = oib)
-if (nrow(zkrs_data) == 0) {
-  cat(paste("Nema rezultata pretrage u zemljišnim knjigama RS"))
-} else {
-  # Prikaz rezultata
-  datatable(zkrs_data, escape = FALSE, options = list(
-    pageLength = 5,
-    columnDefs = list(
-      list(
-        targets = "_all",
-        render = JS(
-          "function(data, type, row, meta) {",
-          "return type === 'display' && data ? data : data;",
-          "}"
-        )
-      )
-    )
-  ))
-}
-```
-
 ## Zemljišne knjige RS po imenu i prezimenu
 ```{r zkrs ime_prezime}
 
@@ -230,3 +238,29 @@ if (nrow(zkrs_data) == 0) {
   ))
 }
 ```
+
+## Zemljišne knjige Federacija po imenu i prezimenu
+```{r zkF ime_prezime}
+
+# Dohvaćanje rezultata pretrage iz baze podataka za zemljišne knjige Federacija
+zkrs_data <- zkrs(naziv = ime_prezime, table = "zk_f_vlasnici")
+if (nrow(zkrs_data) == 0) {
+  cat(paste("Nema rezultata pretrage u zemljišnim knjigama RS"))
+} else {
+  # Prikaz rezultata
+  datatable(zkrs_data, escape = FALSE, options = list(
+    pageLength = 5,
+    columnDefs = list(
+      list(
+        targets = "_all",
+        render = JS(
+          "function(data, type, row, meta) {",
+          "return type === 'display' && data ? data : data;",
+          "}"
+        )
+      )
+    )
+  ))
+}
+```
+

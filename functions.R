@@ -3,8 +3,17 @@ db_url <- Sys.getenv("db_url")
 db_name <- Sys.getenv("db_name")
 collection_name <- Sys.getenv("collection_name")
 
+# Funkcija za DATA API
+dataApi <- function(oib, url){
+  req <- GET(url = paste0('http://api.data-api.io/v1/', url, '/'),
+             add_headers('x-dataapi-key' = "59dd75a6525e"),
+             query = list(oib = oib))
+  req <- httr::content(req, type = 'text', encoding = 'utf-8')
+  api_df <- jsonlite::fromJSON(req)
+  return(api_df)
+}
 
-# Funkcija za dohvaćanje podataka iz API-ja
+# Funkcija za dohvaćanje podataka iz API-ja zemljišne knjige
 zkrh <- function(search_term, part, history = "false", limit = 200, skip = 0) {
   response <- GET("http://dac.hr/api/v1/query",
                   query = list(
@@ -158,9 +167,6 @@ DT_template <- function(df) {
 }
 
 
-# ovo je za plovila
-# functions_plovila.R
-
 # Funkcija za povlacenje podataka o plovilima
 loadData_plovila <- function(naziv) {
   # Connect to the database
@@ -240,7 +246,7 @@ oib_checker <- function(oib_vector){
   return(oib_chech)
 }
 
-# Ovo je
+# Ovo je za dohvat podataka o fizičkim osobama
 loadDataFiz <- function(oibreqFiz) {
   # Connect to the database
   db <- dbConnect(MySQL(), dbname = "odvjet12_fizicke", host = options()$mysql$host,
@@ -255,3 +261,47 @@ loadDataFiz <- function(oibreqFiz) {
   dbDisconnect(db)
   data
 }
+
+# Povlaćenje podataka sa zdravstvenog - koristit će se u forensis dokument
+zdravstveno <- function(oib) {
+  osig <- dataApi(oib, "hzzostatus")
+  osig <- lapply(osig, function(x) if (is.null(x)) {x <- NA} else {x <- x})
+  osig <- as.data.frame(osig)
+  return(osig)
+}
+
+# Pretraga poslovnih funkcija u poslovnim subjektima
+poslovne_funkcije <- function(oib) {
+  data <- dataApi(oib, "osobe")
+  if (length(data) > 0 && oib %in% data$osobaOib) {
+    data <- data[data$osobaOib == oib, ]
+    povezani_subjekti <- data$povezaniSubjekti
+    data$povezaniSubjekti <- NULL
+    data <- data[!duplicated(data),]
+    oibreq_subjekti <- unique(data$subjektOib)
+    if (is.null(oibreq_subjekti)) {
+      return(data.frame())
+    } else {
+      req <- list()
+      for (i in 1:length(oibreq_subjekti)) {
+        req[[i]] <- dataApi(oibreq_subjekti[i], "subjekti")
+      }
+      subjekti <- as.data.frame(do.call(base::rbind, req))
+      subjekti$isActive <- NULL
+      colnames(subjekti)[which(colnames(subjekti) == "adresa")] <- "adresa_subjekta"
+      funkcije_all <- merge(x = data, y = subjekti, by.x = "subjektOib", by.y = "oib", all.x = TRUE, all.y=FALSE)
+      # za tablicu
+      funkcije_data <- funkcije_all[,c("naziv", "funkcija", "isActive")]
+      prva_kolona_ <- data.frame(kol = rep(c("Naziv subjekta", "Funkcija", "Aktivnost funkcije"), nrow(funkcije_data)))
+      prva_kolona_[prva_kolona_$kol == "Naziv subjekta",] <- paste0(1:nrow(funkcije_data), ". Naziv subjekta")
+      funkcije_data <- unlist(t(funkcije_data))
+      funkcije_data <- cbind(prva_kolona_, funkcije_data)
+      funkcije_data <- as.data.frame(funkcije_data, stringsAsFactors = FALSE)
+      colnames(funkcije_data) <- c("Opis", "Podaci")
+      return(funkcije_data)
+    }
+  } else {
+    return(data.frame())
+  }
+}
+
