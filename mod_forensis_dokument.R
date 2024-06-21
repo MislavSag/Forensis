@@ -12,9 +12,9 @@ MUI_forensis_dokument <- function(id) {
         uiOutput(ns("download_ui")) # Koristimo uiOutput za dinamički prikaz gumba
       ),
       mainPanel(
-        shinycssloaders::withSpinner(
+        # shinycssloaders::withSpinner(
           uiOutput(ns("html_output"))
-        )
+        # )
       )
     )
   )

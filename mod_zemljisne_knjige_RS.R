@@ -36,11 +36,11 @@ MS_zemljisne_knjige_RS <- function(input, output, session) {
     if (is.null(results) || nrow(results) == 0) {
       return(HTML("<p style='font-size: 20px; color: red; font-weight: bold;'>Nema rezultata pretrage</p>"))
     } else {
-      return(DT::dataTableOutput(ns("results_table")))
+      return(dataTableOutput(ns("results_table")))
     }
   })
 
-  output$results_table <- DT::renderDataTable({
+  output$results_table <- renderDataTable({
     results <- pretraga_rezultati()
     if (!is.null(results) && nrow(results) > 0) {
       DT_template(results)
