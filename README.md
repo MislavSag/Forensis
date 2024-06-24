@@ -6,12 +6,15 @@
 -   rendering se vrši sa `system()` - terminal
 -   parametri koji su spremljeni u .yml file trebaju zapoćinjati bez "parms:"
 
+## Gotovo
+- redoslijed modula u aplikaciji
+- dodana napomena da generiranje dokumenta traje cca 2 minute
+- gumb preuzmi dokument odvojen od generiraj dokument
 ## TODO
-- [] promijeniti redoslijed modu gore u app: ZK RH, ZK RS, ZK Federacija, plovila, Forensis dokument, Forensis dokument pravne
-- [] dodao bi napomenu da generiranje dokumenta traje cca 2 minute.
+
 - [] dodati modu za pravne osobe i za sada pronaći samo osnovne podatke iz sudskog registra po OIB-u. Dokumentacija za javni API sudskog registra dostupna je na [linku](https://sudreg-data.gov.hr/ords/r/srn_rep/vanjski-srn-rep/home). Ovo je nova dokumentacija aktivna od 1.5.2024. Dakle pokazati osnovne podatke o firmi u tablici. nije potrebno sve podatke. Sam izaberi koje ces staviti, ali za pocetak je dovoljno, naziv, OIB, sjediste i td. Nazive endpointa mozes dobit pomocu koda.
 - [] omoguciti da se pretraga izvrsi pomocu entera, barem za brze pretrage ZK i plovila. 
-- [] nisam mislio za sada cijepislacit, ali odvojio bi malo gumbe Generiraj i Preuzmi dokument.
+
 - [] progugalti mogucnosti za administriranje korisnika. Meni su poznati shinyauth i auth0. Ali koliko se sjecam ima i neka opcija sa Firebasom. Ploomber se isto cini ok ovako na prvu.
  
 

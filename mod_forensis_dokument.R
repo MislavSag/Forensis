@@ -9,6 +9,7 @@ MUI_forensis_dokument <- function(id) {
         textInput(ns("oib"), "Unesite OIB:", value = ""),
         textInput(ns("ime_prezime"), "Unesite Ime i Prezime (neobavezno):", value = ""),
         actionButton(ns("render_btn"), "Generiraj dokument"),
+        tags$p("Napomena: Generiranje izvještaja traje cca 2 minute."), # Add this line for the note
         uiOutput(ns("download_ui")) # Koristimo uiOutput za dinamički prikaz gumba
       ),
       mainPanel(
@@ -19,6 +20,7 @@ MUI_forensis_dokument <- function(id) {
     )
   )
 }
+
 
 MS_forensis_dokument <- function(input, output, session) {
   ns <- session$ns

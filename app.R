@@ -9,6 +9,7 @@ library(shinycssloaders)
 library(quarto)
 library(RMySQL)
 library(stringr)
+library(shinyjs)
 
 # ADDED -------------------------------------------------------------------
 # Add resource path for Quarto HTML file
@@ -42,30 +43,30 @@ ui <- fluidPage(
       MUI_zemljisne_knjige("zemljisne_knjige")
     ),
     tabPanel(
-      title = "Registar plovila RH",
-      MUI_registar_plovila("registar_plovila")
-    ),
-    tabPanel(
-      title = "Forensis dokument",
-      MUI_forensis_dokument("forensis_dokument")
-    ),
-    tabPanel(
       title = "Zemljišne knjige RS",
       MUI_zemljisne_knjige_RS("zemljisne_knjige_RS")
     ),
     tabPanel(
       title = "Zemljišne knjige Federacija",
       MUI_zemljisne_knjige_F("zemljisne_knjige_F")
+    ),
+    tabPanel(
+      title = "Registar plovila RH",
+      MUI_registar_plovila("registar_plovila")
+    ),
+    tabPanel(
+      title = "Forensis dokument",
+      MUI_forensis_dokument("forensis_dokument")
     )
   )
 )
 
 server <- function(input, output, session) {
   callModule(MS_zemljisne_knjige, "zemljisne_knjige")
-  callModule(MS_registar_plovila, "registar_plovila")
-  callModule(MS_forensis_dokument, "forensis_dokument")
   callModule(MS_zemljisne_knjige_RS, "zemljisne_knjige_RS")
   callModule(MS_zemljisne_knjige_F, "zemljisne_knjige_F")
+  callModule(MS_registar_plovila, "registar_plovila")
+  callModule(MS_forensis_dokument, "forensis_dokument")
 }
 
 # Pokretanje aplikacije
