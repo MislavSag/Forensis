@@ -7,12 +7,22 @@ MUI_zemljisne_knjige_RS <- function(id) {
     titlePanel("Zemljišne knjige RS"),
     sidebarLayout(
       sidebarPanel(
-        textInput(ns("search_term"), "Unesite naziv:", value = ""),
+        textInput(ns("search_term"), "Unesite naziv:", value = "",
+                  placeholder = "Unesite naziv i pritisnite Enter ili kliknite Pretraži"),
         actionButton(ns("search_button"), "Pretraži", style = "width:100%;")
       ),
       mainPanel(
         uiOutput(ns("rezultati_tab")) %>% withSpinner(type = 8, color = "#0dc5c1")
       )
+    ),
+    tags$script(
+      HTML(sprintf("
+        $(document).on('keypress', function(e) {
+          if(e.which == 13 && $('#%s').is(':focus')) {
+            $('#%s').click();
+          }
+        });
+      ", ns("search_term"), ns("search_button")))
     )
   )
 }

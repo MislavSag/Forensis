@@ -1,12 +1,14 @@
 # mod_zemljisne_knjige.R
 
+# UI funkcija za modul
 MUI_zemljisne_knjige <- function(id) {
   ns <- NS(id)
   fluidPage(
     titlePanel("Zemljišne knjige RH"),
     sidebarLayout(
       sidebarPanel(
-        textInput(ns("term"), "Unesite pojam za pretragu katastra", value = ""),
+        textInput(ns("term"), "Unesite pojam za pretragu katastra", value = "",
+                  placeholder = "Unesite pojam i pritisnite Enter ili kliknite Pretraži"),
         radioButtons(ns("checkbox"), "Pretraži dio",
                      choices = list("Sve" = "0", "Dio A" = "1", "Dio B" = "2", "Dio C" = "3"),
                      selected = "0"),
@@ -17,12 +19,22 @@ MUI_zemljisne_knjige <- function(id) {
         actionButton(ns("pretraga"), "Pretraži", style = "width:100%;")
       ),
       mainPanel(
-        uiOutput(ns("rezultati_tab")) #  %>% shinycssloaders::withSpinner(type = 8, color = "#0dc5c1")
+        uiOutput(ns("rezultati_tab")) %>% shinycssloaders::withSpinner(type = 8, color = "#0dc5c1")
       )
+    ),
+    tags$script(
+      HTML(sprintf("
+        $(document).on('keypress', function(e) {
+          if(e.which == 13 && $('#%s').is(':focus')) {
+            $('#%s').click();
+          }
+        });
+      ", ns("term"), ns("pretraga")))
     )
   )
 }
 
+# Server funkcija za modul
 MS_zemljisne_knjige <- function(input, output, session) {
   pretraga_rezultati <- eventReactive(input$pretraga, {
     req(input$term)
@@ -75,4 +87,3 @@ MS_zemljisne_knjige <- function(input, output, session) {
     }
   })
 }
-

@@ -6,7 +6,6 @@ library(jsonlite)
 library(data.table)
 library(mongolite)
 library(shinycssloaders)
-# library(quarto)
 library(RMySQL)
 library(stringr)
 library(shinyjs)
@@ -23,6 +22,7 @@ source("mod_registar_plovila.R")
 source("mod_forensis_dokument.R")
 source("mod_zemljisne_knjige_RS.R")
 source("mod_zemljisne_knjige_F.R")
+source("mod_pravne_osobe.R")
 
 ui <- fluidPage(
   theme = bs_theme(
@@ -57,6 +57,10 @@ ui <- fluidPage(
     tabPanel(
       title = "Forensis dokument",
       MUI_forensis_dokument("forensis_dokument")
+    ),
+    tabPanel(
+      title = "Pravne osobe",
+      MUI_pravne_osobe("pravne_osobe")
     )
   )
 )
@@ -67,6 +71,7 @@ server <- function(input, output, session) {
   callModule(MS_zemljisne_knjige_F, "zemljisne_knjige_F")
   callModule(MS_registar_plovila, "registar_plovila")
   callModule(MS_forensis_dokument, "forensis_dokument")
+  callModule(MS_pravne_osobe, "pravne_osobe")
 }
 
 # Pokretanje aplikacije

@@ -6,26 +6,9 @@
 -   rendering se vrši sa `system()` - terminal
 -   parametri koji su spremljeni u .yml file trebaju zapoćinjati bez "parms:"
 
-## Gotovo
-- redoslijed modula u aplikaciji
-- dodana napomena da generiranje dokumenta traje cca 2 minute
-- gumb preuzmi dokument odvojen od generiraj dokument
 ## TODO
 
-- [] dodati modu za pravne osobe i za sada pronaći samo osnovne podatke iz sudskog registra po OIB-u. Dokumentacija za javni API sudskog registra dostupna je na [linku](https://sudreg-data.gov.hr/ords/r/srn_rep/vanjski-srn-rep/home). Ovo je nova dokumentacija aktivna od 1.5.2024. Dakle pokazati osnovne podatke o firmi u tablici. nije potrebno sve podatke. Sam izaberi koje ces staviti, ali za pocetak je dovoljno, naziv, OIB, sjediste i td. Nazive endpointa mozes dobit pomocu koda.
-- [] omoguciti da se pretraga izvrsi pomocu entera, barem za brze pretrage ZK i plovila. 
-
 - [] progugalti mogucnosti za administriranje korisnika. Meni su poznati shinyauth i auth0. Ali koliko se sjecam ima i neka opcija sa Firebasom. Ploomber se isto cini ok ovako na prvu.
- 
-
-```{r}
-sr_api = read_json("https://sudreg-data.gov.hr/api/javni/dokumentacija/open_api")
-names(sr_api$paths)
-```
-Za detalje o firmi mozes koristiti endpoint `detalji_subjekta`.
-
-- [] Pretvorio bi tablicu poslovnih funkcija u wide format. dakle da budu kolone naziv subjekta, funkcija, aktivnost funkcije.
-
 
 ## Q
 - trebam li plovila RH pretraživati samo po ime_prezime ili i po oib-u ?
@@ -35,8 +18,9 @@ oib_checker mi daje 1 za 18710011268 (točan oib) i 1871001126811111 (ili bilo k
 - rezultati zdravstvenog osiguranja prikazati u tablici ili u tekstu ? (trenutno je tablica)
 
 ## Gotovo
-- pretraga nekretnina u federaciji + dodano u forensis dokument
-- pretraga RS i Federacije samo po imenu i prezimenu u forensis dok.
-- pretraga zdravstvenog osiguranja
-- pretraga poslovnih funkcija u poduzećima
-- novi bslib dashboard - još se treba dodatno uredit. Stari app kod sam spremio u arhivu
+- redoslijed modula u aplikaciji
+- dodana napomena da generiranje dokumenta traje cca 2 minute
+- gumb preuzmi dokument odvojen od generiraj dokument
+- enter za pretraživanje dodan u search - svi moduli (u forensis dokumentu samo kod OIB-a)
+- dodan je modul pravne_osobe - svi su podaci ubačeni u modul pa se možemo dogovoriti što da maknem
+- tablica poslovnih funkcija je u wide formatu

@@ -292,12 +292,7 @@ poslovne_funkcije <- function(oib) {
       funkcije_all <- merge(x = data, y = subjekti, by.x = "subjektOib", by.y = "oib", all.x = TRUE, all.y=FALSE)
       # za tablicu
       funkcije_data <- funkcije_all[,c("naziv", "funkcija", "isActive")]
-      prva_kolona_ <- data.frame(kol = rep(c("Naziv subjekta", "Funkcija", "Aktivnost funkcije"), nrow(funkcije_data)))
-      prva_kolona_[prva_kolona_$kol == "Naziv subjekta",] <- paste0(1:nrow(funkcije_data), ". Naziv subjekta")
-      funkcije_data <- unlist(t(funkcije_data))
-      funkcije_data <- cbind(prva_kolona_, funkcije_data)
-      funkcije_data <- as.data.frame(funkcije_data, stringsAsFactors = FALSE)
-      colnames(funkcije_data) <- c("Opis", "Podaci")
+      colnames(funkcije_data) <- c("Naziv subjekta", "Funkcija", "Aktivnost funkcije")
       return(funkcije_data)
     }
   } else {

@@ -8,7 +8,7 @@ format:
     toc-depth: 2
     self-contained: true
 params:
-  oib: "18710011268" # Default vrijednost
+  oib: "" # Default vrijednost
   ime_prezime: "NA"
 ---
 
