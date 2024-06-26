@@ -15,7 +15,9 @@ MUI_zemljisne_knjige <- function(id) {
         radioButtons(ns("history"), "Povijest",
                      choices = list("Da" = "true", "Ne" = "false"),
                      selected = "true"),
-        sliderInput(ns("limit"), "Limit rezultata:", min = 50, max = 1000, value = 200, step = 50),
+        if (Sys.info()["user"] == "Mislav") {
+          sliderInput(ns("limit"), "Limit rezultata:", min = 50, max = 1000, value = 200, step = 50)
+        },
         actionButton(ns("pretraga"), "Pretraži", style = "width:100%;")
       ),
       mainPanel(
@@ -40,7 +42,11 @@ MS_zemljisne_knjige <- function(input, output, session) {
     req(input$term)
 
     # Dohvaćanje rezultata pretrage iz API-ja
-    zkrh_data <- zkrh(input$term, input$checkbox, input$history, limit = input$limit)
+    if (Sys.info()["user"] == "Mislav") {
+      zkrh_data <- zkrh(input$term, input$checkbox, input$history, limit = input$limit)
+    } else {
+      zkrh_data <- zkrh(input$term, input$checkbox, input$history, limit = 100)
+    }
     if (nrow(zkrh_data) == 0) return(NULL)
 
     # Dohvaćanje dokumenata iz MongoDB-a

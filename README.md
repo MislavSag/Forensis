@@ -9,18 +9,23 @@
 ## TODO
 
 - [] progugalti mogucnosti za administriranje korisnika. Meni su poznati shinyauth i auth0. Ali koliko se sjecam ima i neka opcija sa Firebasom. Ploomber se isto cini ok ovako na prvu.
+- [] staviti UI na sredinu (na primjer input text gdje se upisuje pojam i opcije ispod na sredinu). Output bi stabio ispod, isto na sredinu, kao sto je u NekretninePlus apliakciji. Mislim da ljepse izgleda. Ovako napamet, mislim da se za to koristi rowfloud u base shiny. Za bslib trba pogledati u dokumentaciju.
+- [] za pravne osobe treba dodati neke podatke, to mozemo na callu rapstaviti kada se vrati s mora. Najbitnije je dodati pretrage nekretnina za sada.
+- [] Dodati mogucnost generiranje reporta za pravne osobe
 
 ## Q
-- trebam li plovila RH pretraživati samo po ime_prezime ili i po oib-u ?
 - da ubacim oib checker ? Našao sam jedan mali problem:
 oib_checker mi daje 1 za 18710011268 (točan oib) i 1871001126811111 (ili bilo koji drugi nastavak brojeva nakon točnog oib-a)
 -   updateData i sel funkcije (functions.R skripta) - kada se koriste ? (Ovo možemo proći nabrzinu uzivo iz starog forensis koda. Mislio sam da ću koristiti te funkcije u novoj aplikaciji)
 - rezultati zdravstvenog osiguranja prikazati u tablici ili u tekstu ? (trenutno je tablica)
 
-## Gotovo
-- redoslijed modula u aplikaciji
-- dodana napomena da generiranje dokumenta traje cca 2 minute
-- gumb preuzmi dokument odvojen od generiraj dokument
-- enter za pretraživanje dodan u search - svi moduli (u forensis dokumentu samo kod OIB-a)
-- dodan je modul pravne_osobe - svi su podaci ubačeni u modul pa se možemo dogovoriti što da maknem
-- tablica poslovnih funkcija je u wide formatu
+## Pravne osobe
+- sudski registar
+- izvjestaji sa FINA-e. Otici na [link](https://rgfi.fina.hr/JavnaObjava-web/jsp/prijavaKorisnika.jsp){target="_blank"}. 
+- nekretnine RH po OIB-u i nazivu
+- nekretnine RS po nazivu
+- nekretnine Federacija po nazivu
+- plovila po nazivu
+
+## V2
+- porezni duznici
