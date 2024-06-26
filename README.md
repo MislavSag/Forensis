@@ -19,3 +19,13 @@ oib_checker mi daje 1 za 18710011268 (točan oib) i 1871001126811111 (ili bilo k
 -   updateData i sel funkcije (functions.R skripta) - kada se koriste ? (Ovo možemo proći nabrzinu uzivo iz starog forensis koda. Mislio sam da ću koristiti te funkcije u novoj aplikaciji)
 - rezultati zdravstvenog osiguranja prikazati u tablici ili u tekstu ? (trenutno je tablica)
 
+## Pravne osobe
+- sudski registar
+- izvjestaji sa FINA-e. Otici na [link](https://rgfi.fina.hr/JavnaObjava-web/jsp/prijavaKorisnika.jsp){target="_blank"}. 
+- nekretnine RH po OIB-u i nazivu
+- nekretnine RS po nazivu
+- nekretnine Federacija po nazivu
+- plovila po nazivu
+
+## V2
+- porezni duznici
