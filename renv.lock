@@ -313,6 +313,22 @@
       "Repository": "CRAN",
       "Hash": "f7736a18de97dea803bde0a2daaafb27"
     },
+    "firebase": {
+      "Package": "firebase",
+      "Version": "1.0.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "base64enc",
+        "cli",
+        "htmltools",
+        "jose",
+        "jsonlite",
+        "openssl",
+        "shiny"
+      ],
+      "Hash": "fc83e4c480675059e6c93b07ecc9dab1"
+    },
     "fontawesome": {
       "Package": "fontawesome",
       "Version": "0.5.2",
@@ -469,6 +485,17 @@
         "utils"
       ],
       "Hash": "0080607b4a1a7b28979aecef976d8bc2"
+    },
+    "jose": {
+      "Package": "jose",
+      "Version": "1.2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "jsonlite",
+        "openssl"
+      ],
+      "Hash": "acf397c005e2d96a4b7616bf7dfc3112"
     },
     "jquerylib": {
       "Package": "jquerylib",
@@ -936,20 +963,6 @@
         "shiny"
       ],
       "Hash": "f39bb3c44a9b496723ec7e86f9a771d8"
-    },
-    "shinydashboard": {
-      "Package": "shinydashboard",
-      "Version": "0.7.2",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "htmltools",
-        "promises",
-        "shiny",
-        "utils"
-      ],
-      "Hash": "e418b532e9bb4eb22a714b9a9f1acee7"
     },
     "shinyjs": {
       "Package": "shinyjs",

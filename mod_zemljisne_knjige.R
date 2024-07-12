@@ -1,44 +1,68 @@
 # mod_zemljisne_knjige.R
 
 # UI funkcija za modul
+# MUI_zemljisne_knjige <- function(id) {
+#   ns <- NS(id)
+#   layout_columns(
+#    col_widths = c(-3, 6, -3),
+#    card(
+#      card_header("ZK"),
+#      textInput(ns("term"), "Unesite pojam za pretragu katastra", value = "",
+#                placeholder = "Unesite pojam i pritisnite Enter ili kliknite Pretraži"),
+#      radioButtons(ns("checkbox"), "Pretraži dio",
+#                   choices = list("Sve" = "0", "Dio A" = "1", "Dio B" = "2", "Dio C" = "3"),
+#                   selected = "0"),
+#      radioButtons(ns("history"), "Povijest",
+#                   choices = list("Da" = "true", "Ne" = "false"),
+#                   selected = "true"),
+#      if (Sys.info()["user"] == "Mislav") {
+#        sliderInput(ns("limit"), "Limit rezultata:", min = 50, max = 1000, value = 200, step = 50)
+#      },
+#      actionButton(ns("pretraga"), "Pretraži", style = "width:100%;")
+#    )
+#   )
+# }
 MUI_zemljisne_knjige <- function(id) {
   ns <- NS(id)
   fluidPage(
-    titlePanel("Zemljišne knjige RH"),
-    sidebarLayout(
-      sidebarPanel(
-        textInput(ns("term"), "Unesite pojam za pretragu katastra", value = "",
-                  placeholder = "Unesite pojam i pritisnite Enter ili kliknite Pretraži"),
-        radioButtons(ns("checkbox"), "Pretraži dio",
-                     choices = list("Sve" = "0", "Dio A" = "1", "Dio B" = "2", "Dio C" = "3"),
-                     selected = "0"),
-        radioButtons(ns("history"), "Povijest",
-                     choices = list("Da" = "true", "Ne" = "false"),
-                     selected = "true"),
-        if (Sys.info()["user"] == "Mislav") {
-          sliderInput(ns("limit"), "Limit rezultata:", min = 50, max = 1000, value = 200, step = 50)
-        },
-        actionButton(ns("pretraga"), "Pretraži", style = "width:100%;")
-      ),
-      mainPanel(
-        uiOutput(ns("rezultati_tab")) %>% shinycssloaders::withSpinner(type = 8, color = "#0dc5c1")
-      )
-    ),
-    tags$script(
-      HTML(sprintf("
+    tagList(
+        titlePanel("Zemljišne knjige RH"),
+        sidebarLayout(
+          sidebarPanel(
+            textInput(ns("term"), "Unesite pojam za pretragu katastra", value = "",
+                      placeholder = "Unesite pojam i pritisnite Enter ili kliknite Pretraži"),
+            radioButtons(ns("checkbox"), "Pretraži dio",
+                         choices = list("Sve" = "0", "Dio A" = "1", "Dio B" = "2", "Dio C" = "3"),
+                         selected = "0"),
+            radioButtons(ns("history"), "Povijest",
+                         choices = list("Da" = "true", "Ne" = "false"),
+                         selected = "true"),
+            if (Sys.info()["user"] == "Mislav") {
+              sliderInput(ns("limit"), "Limit rezultata:", min = 50, max = 1000, value = 200, step = 50)
+            },
+            actionButton(ns("pretraga"), "Pretraži", style = "width:100%;")
+          ),
+          mainPanel(
+            uiOutput(ns("rezultati_tab")) %>% shinycssloaders::withSpinner(type = 8, color = "#0dc5c1")
+          )
+        ),
+      tags$script(
+        HTML(sprintf("
         $(document).on('keypress', function(e) {
           if(e.which == 13 && $('#%s').is(':focus')) {
             $('#%s').click();
           }
         });
       ", ns("term"), ns("pretraga")))
+      )
     )
   )
 }
 
 # Server funkcija za modul
-MS_zemljisne_knjige <- function(input, output, session) {
+MS_zemljisne_knjige <- function(input, output, session, f) {
   pretraga_rezultati <- eventReactive(input$pretraga, {
+
     req(input$term)
 
     # Dohvaćanje rezultata pretrage iz API-ja
@@ -68,6 +92,7 @@ MS_zemljisne_knjige <- function(input, output, session) {
   })
 
   output$rezultati_tab <- renderUI({
+
     results <- pretraga_rezultati()
     if (is.null(results) || nrow(results) == 0) {
       return(HTML("<p style='font-size: 20px; color: red; font-weight: bold;'>Nema rezultata pretrage</p>"))
@@ -77,6 +102,7 @@ MS_zemljisne_knjige <- function(input, output, session) {
   })
 
   output$results_table <- renderDataTable({
+
     results <- pretraga_rezultati()
     if (!is.null(results) && nrow(results) > 0) {
       datatable(results, escape = FALSE, options = list(
