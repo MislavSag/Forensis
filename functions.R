@@ -5,9 +5,14 @@ collection_name <- Sys.getenv("collection_name")
 
 # Funkcija za DATA API
 dataApi <- function(oib, url){
-  req <- GET(url = paste0('http://api.data-api.io/v1/', url, '/'),
-             add_headers('x-dataapi-key' = "59dd75a6525e"),
-             query = list(oib = oib))
+  req = RETRY(
+    "GET",
+    url = paste0('http://api.data-api.io/v1/', url, '/'),
+    add_headers('x-dataapi-key' = "59dd75a6525e"),
+    query = list(oib = oib),
+    timeout(180),
+    times = 6
+  )
   req <- httr::content(req, type = 'text', encoding = 'utf-8')
   api_df <- jsonlite::fromJSON(req)
   return(api_df)
@@ -44,6 +49,7 @@ zkrh <- function(search_term, part, history = "false", limit = 200, skip = 0) {
     return(dt)
   }
 }
+# x = zkrh("93335620125", "0", "true", 200, 0)
 
 # funkcija sa dohvaćanje dokumenata iz MongoDB baze
 # koristi se atlas search (22.05.) koji je znatno skratio vrijeme dohvate docc

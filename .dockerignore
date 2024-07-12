@@ -1,0 +1,13 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+/.quarto/
+renv.lock
+renv/
+archived/
+rsconnect/
+radna_skripta.R
+.Rprofile
+README.html
+README.md

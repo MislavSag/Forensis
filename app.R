@@ -1,14 +1,15 @@
-library(shiny)
-library(bslib)
-library(DT)
-library(httr)
-library(jsonlite)
-library(data.table)
-library(mongolite)
-library(shinycssloaders)
-library(RMySQL)
-library(stringr)
-library(shinyjs)
+require(shiny)
+require(bslib)
+require(DT)
+require(httr)
+require(jsonlite)
+require(data.table)
+require(mongolite)
+require(shinycssloaders)
+require(RMySQL)
+require(stringr)
+require(shinyjs)
+require(firebase)
 
 # ADDED -------------------------------------------------------------------
 # Add resource path for Quarto HTML file
@@ -24,45 +25,25 @@ source("mod_zemljisne_knjige_RS.R")
 source("mod_zemljisne_knjige_F.R")
 source("mod_pravne_osobe.R")
 
-ui <- fluidPage(
-  theme = bs_theme(
-    bootswatch = "cosmo",
-    primary = "#007bff",
-    secondary = "#6c757d",
-    success = "#28a745",
-    info = "#17a2b8",
-    warning = "#ffc107",
-    danger = "#dc3545",
-    light = "#f8f9fa",
-    dark = "#343a40"
-  ),
-  navbarPage(
-    title = "Forensis",
-    tabPanel(
-      title = "Zemljišne knjige RH",
-      MUI_zemljisne_knjige("zemljisne_knjige")
-    ),
-    tabPanel(
-      title = "Zemljišne knjige RS",
-      MUI_zemljisne_knjige_RS("zemljisne_knjige_RS")
-    ),
-    tabPanel(
-      title = "Zemljišne knjige Federacija",
-      MUI_zemljisne_knjige_F("zemljisne_knjige_F")
-    ),
-    tabPanel(
-      title = "Registar plovila RH",
-      MUI_registar_plovila("registar_plovila")
-    ),
-    tabPanel(
-      title = "Forensis dokument",
-      MUI_forensis_dokument("forensis_dokument")
-    ),
-    tabPanel(
-      title = "Pravne osobe",
-      MUI_pravne_osobe("pravne_osobe")
+
+ui = page_navbar(
+  title = "Forensis",
+  id = "nav",
+  sidebar = NULL,
+  nav_panel(title = "Zemljišne knjige RH", MUI_zemljisne_knjige("zemljisne_knjige")),
+  nav_panel(title = "Zemljišne knjige RS", MUI_zemljisne_knjige_RS("zemljisne_knjige_RS")),
+  nav_panel(title = "Zemljišne knjige Federacija", MUI_zemljisne_knjige_F("zemljisne_knjige_F")),
+  nav_panel(title = "Registar plovila RH", MUI_registar_plovila("registar_plovila")),
+  nav_panel(title = "Forensis dokument", MUI_forensis_dokument("forensis_dokument")),
+  nav_panel(title = "Pravne osobe", MUI_pravne_osobe("pravne_osobe")),
+  nav_spacer(),
+  nav_panel(
+    tags$a(
+      icon("sign-out-alt"),
+      "Odjava",
+      href = "https://forensis.shinyapps.io/ForensisTest/__logout__/"
+      )
     )
-  )
 )
 
 server <- function(input, output, session) {
