@@ -1,0 +1,275 @@
+---
+title: "Forensis dokument - Pravne Osobe"
+format: 
+  html:
+    theme: "cosmo"
+    highlight-style: "github"
+    toc: true
+    toc-depth: 2
+    self-contained: true
+params:
+  oib: "" # Default vrijednost je prazna (00637770898)
+  naziv: ""
+---
+
+```{r setup, include=FALSE}
+
+library(shiny)
+library(bslib)
+library(DT)
+library(httr)
+library(jsonlite)
+library(data.table)
+library(mongolite)
+library(shinycssloaders)
+library(quarto)
+library(RMySQL)
+library(stringr)
+
+# Učitavanje zasebnih skripti
+source("functions.R")
+
+# Postavljanje globalnih opcija za prikaz koda i upozorenja
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+# parametar 'oib' iz Quarto dokumenta
+oib <- params$oib
+naziv <- params$naziv
+
+# ove funkcjije vuku podatke - definirane su u skripti functions
+data <- pravne_osobe_API(oib)
+tablice <- prikazi_podatke_pravne_osobe(data)
+
+```
+
+
+# Podaci - Sudski registar
+
+```{r opci_podaci}
+if (!is.null(tablice$opci_podaci)) {
+  datatable(tablice$opci_podaci, options = list(pageLength = 5), caption = "Opći podaci")
+}
+```
+
+## Tvrtka
+
+```{r tvrtka}
+if (!is.null(tablice$tvrtka)) {
+  datatable(tablice$tvrtka, options = list(pageLength = 5), caption = "Tvrtka")
+}
+```
+
+## Skraćena tvrtka
+
+```{r skracena tvrtka}
+if (!is.null(tablice$skracena_tvrtka)) {
+  datatable(tablice$skracena_tvrtka, options = list(pageLength = 5), caption = "Skraćena Tvrtka")
+}
+```
+
+## Sjedište
+
+```{r sjediste}
+if (!is.null(tablice$sjediste)) {
+  datatable(tablice$sjediste, options = list(pageLength = 5), caption = "Sjedište")
+}
+```
+
+## Email adrese
+
+```{r email}
+if (!is.null(tablice$email_adrese)) {
+  datatable(tablice$email_adrese, options = list(pageLength = 5), caption = "Email adrese")
+}
+```
+
+## Predmet poslovanja
+
+```{r poslovanje}
+if (!is.null(tablice$predmeti_poslovanja)) {
+  datatable(tablice$predmeti_poslovanja, options = list(pageLength = 5), caption = "Predmeti poslovanja")
+}
+```
+
+## Temeljni kapital
+
+```{r}
+if (!is.null(tablice$temeljni_kapitali)) {
+  datatable(tablice$temeljni_kapitali, options = list(pageLength = 5), caption = "Temeljni kapitali")
+}
+```
+
+## GFI
+
+```{r}
+if (!is.null(tablice$gfi)) {
+  datatable(tablice$gfi, options = list(pageLength = 5), caption = "GFI")
+}
+```
+
+## Promjene
+
+```{r}
+if (!is.null(tablice$promjene)) {
+  datatable(tablice$promjene, options = list(pageLength = 5), caption = "Promjene")
+}
+```
+
+
+## Zemljišne knjige RH po oib-u
+```{r zkrh oib}
+
+# Učitajte podatke iz zemljišnih knjiga prema OIB-u
+zkrh_data <- zkrh(oib, part = 0)
+if (nrow(zkrh_data) == 0) {
+  cat(paste("Nema rezultata u zemljišnim knjigama"))
+} else {
+  # Dohvaćanje dokumenata iz MongoDB-a
+  mongo_data <- mongoDB(zkrh_data$id, collection = collection_name, db = db_name, url = db_url)
+
+  # Spajanje podataka
+  final_data <- spoji_podatke(zkrh_data, mongo_data)
+
+  # Ažuriranje URL-a
+  base_url <- "https://oss.uredjenazemlja.hr/oss/public/reports/ldb-extract/"
+  final_data[, fileUrl := ifelse(is.na(fileUrl), NA_character_, paste0(base_url, fileUrl))]
+
+  # Odabir potrebnih varijabli i promjena imena stupaca
+  final_data <- final_data[, .(id, type, unit, institution, book, status, burden, fileUrl)]
+  setnames(final_data, old = c("id", "type", "unit", "institution", "book", "status", "burden", "fileUrl"),
+           new = c("ID", "Vrsta knjige", "Broj zemljišta (kat. čestice)", "Općinski sud / ZK odjel", "Glavna knjiga", "Status", "Teret", "Link"))
+
+  # Prikaz rezultata
+  datatable(final_data, escape = FALSE, options = list(
+    pageLength = 5,
+    columnDefs = list(
+      list(
+        targets = ncol(final_data),  # Indeks stupca 'Link'
+        render = JS(
+          "function(data, type, row, meta) {",
+          "return type === 'display' && data ? '<a href=\"' + data + '\" target=\"_blank\">Open</a>' : data;",
+          "}"
+        )
+      )
+    )
+  ))
+}
+```
+
+## Zemljišne knjige RH po imenu i prezimenu
+```{r zkrh naziv}
+
+# Učitajte podatke iz zemljišnih knjiga prema OIB-u
+zkrh_data <- zkrh(naziv, part = 0)
+if (nrow(zkrh_data) == 0) {
+  cat(paste("Nema rezultata u zemljišnim knjigama"))
+} else {
+  # Dohvaćanje dokumenata iz MongoDB-a
+  mongo_data <- mongoDB(zkrh_data$id, collection = collection_name, db = db_name, url = db_url)
+
+  # Spajanje podataka
+  final_data <- spoji_podatke(zkrh_data, mongo_data)
+
+  # Ažuriranje URL-a
+  base_url <- "https://oss.uredjenazemlja.hr/oss/public/reports/ldb-extract/"
+  final_data[, fileUrl := ifelse(is.na(fileUrl), NA_character_, paste0(base_url, fileUrl))]
+
+  # Odabir potrebnih varijabli i promjena imena stupaca
+  final_data <- final_data[, .(id, type, unit, institution, book, status, burden, fileUrl)]
+  setnames(final_data, old = c("id", "type", "unit", "institution", "book", "status", "burden", "fileUrl"),
+           new = c("ID", "Vrsta knjige", "Broj zemljišta (kat. čestice)", "Općinski sud / ZK odjel", "Glavna knjiga", "Status", "Teret", "Link"))
+
+  # Prikaz rezultata
+  datatable(final_data, escape = FALSE, options = list(
+    pageLength = 5,
+    columnDefs = list(
+      list(
+        targets = ncol(final_data),  # Indeks stupca 'Link'
+        render = JS(
+          "function(data, type, row, meta) {",
+          "return type === 'display' && data ? '<a href=\"' + data + '\" target=\"_blank\">Open</a>' : data;",
+          "}"
+        )
+      )
+    )
+  ))
+}
+
+```
+
+## Plovila RH po imenu i prezimenu
+```{r plovila naziv}
+
+# Dohvaćanje rezultata pretrage iz baze podataka za plovila
+plovila_data <- loadData_plovila(naziv)
+if (nrow(plovila_data) == 0) {
+  cat(paste("Nema rezultata u registru plovila."))
+} else {
+  final_plovila <- plovila_data
+  # Prikaz rezultata
+  datatable(final_plovila, escape = FALSE, options = list(
+    pageLength = 5,
+    columnDefs = list(
+      list(
+        targets = "_all",
+        render = JS(
+          "function(data, type, row, meta) {",
+          "return type === 'display' && data ? data : data;",
+          "}"
+        )
+      )
+    )
+  ))
+}
+
+```
+
+## Zemljišne knjige RS po imenu i prezimenu
+```{r zkrs naziv}
+
+# Dohvaćanje rezultata pretrage iz baze podataka za zemljišne knjige RS
+zkrs_data <- zkrs(naziv = naziv)
+if (nrow(zkrs_data) == 0) {
+  cat(paste("Nema rezultata pretrage u zemljišnim knjigama RS"))
+} else {
+  # Prikaz rezultata
+  datatable(zkrs_data, escape = FALSE, options = list(
+    pageLength = 5,
+    columnDefs = list(
+      list(
+        targets = "_all",
+        render = JS(
+          "function(data, type, row, meta) {",
+          "return type === 'display' && data ? data : data;",
+          "}"
+        )
+      )
+    )
+  ))
+}
+```
+
+## Zemljišne knjige Federacija po imenu i prezimenu
+```{r zkF naziv}
+
+# Dohvaćanje rezultata pretrage iz baze podataka za zemljišne knjige Federacija
+zkrs_data <- zkrs(naziv = naziv, table = "zk_f_vlasnici")
+if (nrow(zkrs_data) == 0) {
+  cat(paste("Nema rezultata pretrage u zemljišnim knjigama RS"))
+} else {
+  # Prikaz rezultata
+  datatable(zkrs_data, escape = FALSE, options = list(
+    pageLength = 5,
+    columnDefs = list(
+      list(
+        targets = "_all",
+        render = JS(
+          "function(data, type, row, meta) {",
+          "return type === 'display' && data ? data : data;",
+          "}"
+        )
+      )
+    )
+  ))
+}
+```

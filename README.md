@@ -13,6 +13,7 @@
 -   OIB checker i max 11 znakova
 -   Pretraga plovila samo po nazivu
 -   Pravne osobe modul
+-   Skripta za GFI zasada sadrži samo konvertiranje originalnih GFI-jeva u utf-8
 
 ## TODO
 

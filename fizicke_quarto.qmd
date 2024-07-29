@@ -1,5 +1,5 @@
 ---
-title: "Forensis dokument"
+title: "Forensis dokument - Fizičke Osobe"
 format: 
   html:
     theme: "cosmo"
@@ -149,34 +149,6 @@ if (nrow(zkrh_data) == 0) {
         render = JS(
           "function(data, type, row, meta) {",
           "return type === 'display' && data ? '<a href=\"' + data + '\" target=\"_blank\">Open</a>' : data;",
-          "}"
-        )
-      )
-    )
-  ))
-}
-
-```
-
-
-## Plovila RH po oib-u
-```{r plovila oib}
-
-# Dohvaćanje rezultata pretrage iz baze podataka za plovila
-plovila_data <- loadData_plovila(oib)
-if (nrow(plovila_data) == 0) {
-  cat(paste("Nema rezultata u registru plovila."))
-} else {
-  final_plovila <- plovila_data
-  # Prikaz rezultata
-  datatable(final_plovila, escape = FALSE, options = list(
-    pageLength = 5,
-    columnDefs = list(
-      list(
-        targets = "_all",
-        render = JS(
-          "function(data, type, row, meta) {",
-          "return type === 'display' && data ? data : data;",
           "}"
         )
       )
