@@ -14,6 +14,7 @@
 - [] Excel epxort kod datatable-a treba povuci cijelu tablicu (server = FALSE)
 - [] OIB checker i max 11 znakova
 - [] Pretraga plovila samo po nazivu.
+- [] Pretraga po OIB-u 44339275803 u forensis dokument modulu vraca 404. Provjeriti zasto.
 
 ## Q
 - da ubacim oib checker ? Našao sam jedan mali problem:
