@@ -3,6 +3,9 @@ db_url <- Sys.getenv("db_url")
 db_name <- Sys.getenv("db_name")
 collection_name <- Sys.getenv("collection_name")
 
+sudreg_api_user <- Sys.getenv("SUDREG_API_USER") # sudski registar
+sudreg_api_pass <- Sys.getenv("SUDREG_API_PASS") # sudski registar
+
 # Funkcija za DATA API
 dataApi <- function(oib, url){
   req = RETRY(
@@ -161,6 +164,7 @@ zkrs <- function(table = "zk_rs_vlasnici", naziv) {
   return(data)
 }
 
+# ovo je za zk RS, F
 DT_template <- function(df) {
   datatable(df,
             rownames = FALSE,
@@ -171,7 +175,6 @@ DT_template <- function(df) {
                            buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
                            lengthMenu = list(c(10,25,50,-1), c(10,25,50,"All"))))
 }
-
 
 # Funkcija za povlacenje podataka o plovilima
 loadData_plovila <- function(naziv) {
@@ -195,33 +198,6 @@ loadData_plovila <- function(naziv) {
   }))
 
   return(data)
-}
-
-# Funkcija za ažuriranje broja upita korisnika
-updateData <- function(broj, user) {
-  # Connect to the database
-  db <- dbConnect(RMySQL::MySQL(), dbname = databaseName, host = options()$mysql$host,
-                  port = options()$mysql$port, user = options()$mysql$user,
-                  password = options()$mysql$password)
-  # Construct the update query by looping over the data fields
-  query <- sprintf(
-    "UPDATE users SET upiti = %d WHERE user = '%s';", broj - 1L, user
-  )
-  # Submit the update query and disconnect
-  dbSendQuery(db, 'set character set "utf8"')
-  dbSendQuery(db, 'SET NAMES utf8')
-  dbGetQuery(db, query)
-  dbDisconnect(db)
-}
-
-# Funkcija za odabir stupaca
-sel <- function(x, y){
-  kolona_izbor <- list()
-  for (i in 1:length(y)){
-    kolona_izbor[[i]] <- which(colnames(x) == y[[i]])
-  }
-  kolona_izbor <- unlist(kolona_izbor)
-  return(kolona_izbor)
 }
 
 # Template za DT plovila
@@ -306,3 +282,223 @@ poslovne_funkcije <- function(oib) {
   }
 }
 
+# Funkcija za dohvaćanje podataka o pravnim osobama iz API-ja
+pravne_osobe_API <- function(oib) {
+  # Dohvaćanje tokena
+  response <- POST("https://sudreg-data.gov.hr/api/oauth/token",
+                   authenticate(sudreg_api_user, sudreg_api_pass),
+                   body = list(grant_type = "client_credentials"),
+                   encode = "form")
+
+  if (status_code(response) == 200) {
+    token_data <- content(response, "parsed", simplifyVector = TRUE)
+    access_token <- token_data$access_token
+
+    # Definiranje URL-a za endpoint "/detalji_subjekta"
+    base_url <- "https://sudreg-data.gov.hr/api/javni"
+    endpoint <- "/detalji_subjekta"
+    url <- paste0(base_url, endpoint, "?tip_identifikatora=oib&identifikator=", oib)
+
+    # Slanje GET zahtjeva na API s autentifikacijom
+    response <- GET(url, add_headers(Authorization = paste("Bearer", access_token)))
+
+    if (status_code(response) == 200) {
+      # Parsiranje JSON odgovora
+      data <- content(response, "parsed", simplifyVector = TRUE)
+      return(data)
+    } else {
+      stop("Greška: Status kod ", status_code(response))
+    }
+  } else {
+    stop("Greška: Status kod ", status_code(response))
+  }
+}
+
+# Funkcija za prikaz podataka
+pravne_osobe_podaci <- function(data) {
+  if (!is.null(data)) {
+    # Pretvaranje podataka u tablice
+    opci_podaci <- data.frame(
+      Ključ = c("MBS", "Status", "Sud ID Nadležan", "Sud ID Služba", "OIB", "MB", "Potpuni MBS",
+                "Potpuni OIB", "Ino Podružnica", "Stečajna Masa", "Likvidacijska Masa",
+                "Glavna Djelatnost", "Datum Osnivanja", "Vrijeme Zadnje Izmjene"),
+      Vrijednost = c(data$mbs, data$status, data$sud_id_nadlezan, data$sud_id_sluzba, data$oib, data$mb,
+                     data$potpuni_mbs, data$potpuni_oib, data$ino_podruznica, data$stecajna_masa,
+                     data$likvidacijska_masa, data$glavna_djelatnost, data$datum_osnivanja, data$vrijeme_zadnje_izmjene)
+    )
+
+    tvrtka <- data.frame(
+      Tvrtka = data$tvrtka$ime,
+      Naznaka_Ime = data$tvrtka$naznaka_imena
+    )
+
+    skracena_tvrtka <- data.frame(
+      Skracena_Tvrtka = data$skracena_tvrtka$ime
+    )
+
+    sjediste <- data.frame(
+      Županija = data$sjediste$naziv_zupanije,
+      Općina = data$sjediste$naziv_opcine,
+      Naselje = data$sjediste$naziv_naselja,
+      Ulica = data$sjediste$ulica,
+      Kućni_Broj = data$sjediste$kucni_broj
+    )
+
+    email_adrese <- as.data.frame(data$email_adrese)
+
+    predmeti_poslovanja <- as.data.frame(data$predmeti_poslovanja)
+
+    temeljni_kapitali <- as.data.frame(data$temeljni_kapitali)
+
+    gfi <- as.data.frame(data$gfi)
+
+    promjene <- as.data.frame(data$promjene)
+
+    # Kreiraj listu s tablicama
+    list(
+      opci_podaci = opci_podaci,
+      tvrtka = tvrtka,
+      skracena_tvrtka = skracena_tvrtka,
+      sjediste = sjediste,
+      email_adrese = email_adrese,
+      predmeti_poslovanja = predmeti_poslovanja,
+      temeljni_kapitali = temeljni_kapitali,
+      gfi = gfi,
+      promjene = promjene
+    )
+  } else {
+    NULL
+  }
+}
+
+# # Funkcija za prikaz podataka - pravne osobe quarto
+# prikazi_podatke_pravne_osobe <- function(data) {
+#   if (!is.null(data)) {
+#     # Pretvaranje podataka u tablice
+#     opci_podaci <- data.frame(
+#       Ključ = c("MBS", "Status", "Sud ID Nadležan", "Sud ID Služba", "OIB", "MB", "Potpuni MBS",
+#                 "Potpuni OIB", "Ino Podružnica", "Stečajna Masa", "Likvidacijska Masa",
+#                 "Glavna Djelatnost", "Datum Osnivanja", "Vrijeme Zadnje Izmjene"),
+#       Vrijednost = c(as.character(data$mbs), as.character(data$status), as.character(data$sud_id_nadlezan),
+#                      as.character(data$sud_id_sluzba), as.character(data$oib), as.character(data$mb),
+#                      data$potpuni_mbs, data$potpuni_oib, as.character(data$ino_podruznica),
+#                      as.character(data$stecajna_masa), as.character(data$likvidacijska_masa),
+#                      as.character(data$glavna_djelatnost), data$datum_osnivanja, data$vrijeme_zadnje_izmjene)
+#     )
+#
+#     tvrtka <- data.frame(
+#       Tvrtka = data$tvrtka$ime,
+#       Naznaka_Ime = data$tvrtka$naznaka_imena
+#     )
+#
+#     skracena_tvrtka <- data.frame(
+#       Skracena_Tvrtka = data$skracena_tvrtka$ime
+#     )
+#
+#     sjediste <- data.frame(
+#       Županija = data$sjediste$naziv_zupanije,
+#       Općina = data$sjediste$naziv_opcine,
+#       Naselje = data$sjediste$naziv_naselja,
+#       Ulica = data$sjediste$ulica,
+#       Kućni_Broj = data$sjediste$kucni_broj
+#     )
+#
+#     email_adrese <- as.data.frame(data$email_adrese)
+#
+#     predmeti_poslovanja <- as.data.frame(data$predmeti_poslovanja)
+#
+#     temeljni_kapitali <- as.data.frame(data$temeljni_kapitali)
+#
+#     gfi <- as.data.frame(data$gfi)
+#
+#     promjene <- as.data.frame(data$promjene)
+#
+#     # Kreiraj listu s tablicama
+#     list(
+#       opci_podaci = opci_podaci,
+#       tvrtka = tvrtka,
+#       skracena_tvrtka = skracena_tvrtka,
+#       sjediste = sjediste,
+#       email_adrese = email_adrese,
+#       predmeti_poslovanja = predmeti_poslovanja,
+#       temeljni_kapitali = temeljni_kapitali,
+#       gfi = gfi,
+#       promjene = promjene
+#     )
+#   } else {
+#     NULL
+#   }
+# }
+
+# Funkcija za prikaz podataka
+prikazi_podatke_pravne_osobe <- function(data) {
+  if (!is.null(data)) {
+    # Provjera i popunjavanje podataka
+    mbs <- if (!is.null(data$mbs)) data$mbs else NA
+    status <- if (!is.null(data$status)) data$status else NA
+    sud_id_nadlezan <- if (!is.null(data$sud_id_nadlezan)) data$sud_id_nadlezan else NA
+    sud_id_sluzba <- if (!is.null(data$sud_id_sluzba)) data$sud_id_sluzba else NA
+    oib <- if (!is.null(data$oib)) data$oib else NA
+    mb <- if (!is.null(data$mb)) data$mb else NA
+    potpuni_mbs <- if (!is.null(data$potpuni_mbs)) data$potpuni_mbs else NA
+    potpuni_oib <- if (!is.null(data$potpuni_oib)) data$potpuni_oib else NA
+    ino_podruznica <- if (!is.null(data$ino_podruznica)) data$ino_podruznica else NA
+    stecajna_masa <- if (!is.null(data$stecajna_masa)) data$stecajna_masa else NA
+    likvidacijska_masa <- if (!is.null(data$likvidacijska_masa)) data$likvidacijska_masa else NA
+    glavna_djelatnost <- if (!is.null(data$glavna_djelatnost)) data$glavna_djelatnost else NA
+    datum_osnivanja <- if (!is.null(data$datum_osnivanja)) data$datum_osnivanja else NA
+    vrijeme_zadnje_izmjene <- if (!is.null(data$vrijeme_zadnje_izmjene)) data$vrijeme_zadnje_izmjene else NA
+
+    # Pretvaranje podataka u tablice
+    opci_podaci <- data.frame(
+      Ključ = c("MBS", "Status", "Sud ID Nadležan", "Sud ID Služba", "OIB", "MB", "Potpuni MBS",
+                "Potpuni OIB", "Ino Podružnica", "Stečajna Masa", "Likvidacijska Masa",
+                "Glavna Djelatnost", "Datum Osnivanja", "Vrijeme Zadnje Izmjene"),
+      Vrijednost = c(mbs, status, sud_id_nadlezan, sud_id_sluzba, oib, mb,
+                     potpuni_mbs, potpuni_oib, ino_podruznica, stecajna_masa,
+                     likvidacijska_masa, glavna_djelatnost, datum_osnivanja, vrijeme_zadnje_izmjene)
+    )
+
+    tvrtka <- data.frame(
+      Tvrtka = data$tvrtka$ime,
+      Naznaka_Ime = data$tvrtka$naznaka_imena
+    )
+
+    skracena_tvrtka <- data.frame(
+      Skracena_Tvrtka = data$skracena_tvrtka$ime
+    )
+
+    sjediste <- data.frame(
+      Županija = data$sjediste$naziv_zupanije,
+      Općina = data$sjediste$naziv_opcine,
+      Naselje = data$sjediste$naziv_naselja,
+      Ulica = data$sjediste$ulica,
+      Kućni_Broj = data$sjediste$kucni_broj
+    )
+
+    email_adrese <- as.data.frame(data$email_adrese)
+
+    predmeti_poslovanja <- as.data.frame(data$predmeti_poslovanja)
+
+    temeljni_kapitali <- as.data.frame(data$temeljni_kapitali)
+
+    gfi <- as.data.frame(data$gfi)
+
+    promjene <- as.data.frame(data$promjene)
+
+    # Kreiraj listu s tablicama
+    list(
+      opci_podaci = opci_podaci,
+      tvrtka = tvrtka,
+      skracena_tvrtka = skracena_tvrtka,
+      sjediste = sjediste,
+      email_adrese = email_adrese,
+      predmeti_poslovanja = predmeti_poslovanja,
+      temeljni_kapitali = temeljni_kapitali,
+      gfi = gfi,
+      promjene = promjene
+    )
+  } else {
+    NULL
+  }
+}

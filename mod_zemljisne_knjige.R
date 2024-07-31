@@ -1,63 +1,52 @@
 # mod_zemljisne_knjige.R
 
-# UI funkcija za modul
-# MUI_zemljisne_knjige <- function(id) {
-#   ns <- NS(id)
-#   layout_columns(
-#    col_widths = c(-3, 6, -3),
-#    card(
-#      card_header("ZK"),
-#      textInput(ns("term"), "Unesite pojam za pretragu katastra", value = "",
-#                placeholder = "Unesite pojam i pritisnite Enter ili kliknite Pretraži"),
-#      radioButtons(ns("checkbox"), "Pretraži dio",
-#                   choices = list("Sve" = "0", "Dio A" = "1", "Dio B" = "2", "Dio C" = "3"),
-#                   selected = "0"),
-#      radioButtons(ns("history"), "Povijest",
-#                   choices = list("Da" = "true", "Ne" = "false"),
-#                   selected = "true"),
-#      if (Sys.info()["user"] == "Mislav") {
-#        sliderInput(ns("limit"), "Limit rezultata:", min = 50, max = 1000, value = 200, step = 50)
-#      },
-#      actionButton(ns("pretraga"), "Pretraži", style = "width:100%;")
-#    )
-#   )
-# }
 MUI_zemljisne_knjige <- function(id) {
   ns <- NS(id)
   fluidPage(
     tagList(
-        titlePanel("Zemljišne knjige RH"),
-        sidebarLayout(
-          sidebarPanel(
-            textInput(ns("term"), "Unesite pojam za pretragu katastra", value = "",
-                      placeholder = "Unesite pojam i pritisnite Enter ili kliknite Pretraži"),
-            radioButtons(ns("checkbox"), "Pretraži dio",
-                         choices = list("Sve" = "0", "Dio A" = "1", "Dio B" = "2", "Dio C" = "3"),
-                         selected = "0"),
-            radioButtons(ns("history"), "Povijest",
-                         choices = list("Da" = "true", "Ne" = "false"),
-                         selected = "true"),
-            if (Sys.info()["user"] == "Mislav") {
-              sliderInput(ns("limit"), "Limit rezultata:", min = 50, max = 1000, value = 200, step = 50)
-            },
-            actionButton(ns("pretraga"), "Pretraži", style = "width:100%;")
-          ),
-          mainPanel(
-            uiOutput(ns("rezultati_tab")) %>% shinycssloaders::withSpinner(type = 8, color = "#0dc5c1")
-          )
-        ),
+      titlePanel("Zemljišne knjige RH"),
+      fluidRow(
+        column(12, align = "center",
+               div(style = "display: inline-block; width: 80%; max-width: 600px;",
+                   tags$div(style = "font-weight: bold; font-size: 16px; margin-bottom: 10px;",
+                            textInput(ns("term"), "Unesite pojam za pretragu katastra", value = "",
+                                      placeholder = "Unesite pojam i pritisnite Enter ili kliknite Pretraži"),
+                            radioButtons(ns("checkbox"), "Pretraži dio",
+                                         choices = list("Sve" = "0", "Dio A" = "1", "Dio B" = "2", "Dio C" = "3"),
+                                         selected = "0"),
+                            radioButtons(ns("history"), "Povijest",
+                                         choices = list("Da" = "true", "Ne" = "false"),
+                                         selected = "true"),
+                            if (Sys.info()["user"] == "Mislav") {
+                              sliderInput(ns("limit"), "Limit rezultata:", min = 50, max = 1000, value = 200, step = 50)
+                            }
+                   ),
+                   actionButton(ns("pretraga"), "Pretraži", style = "width:100%; font-weight: bold; font-size: 16px; background-color: #337ab7; color: white;")
+               )
+        )
+      ),
+      fluidRow(
+        column(12,
+               div(style = "width: 100%;",
+                   uiOutput(ns("rezultati_tab")) %>% shinycssloaders::withSpinner(type = 8, color = "#0dc5c1")
+               )
+        )
+      ),
       tags$script(
         HTML(sprintf("
-        $(document).on('keypress', function(e) {
-          if(e.which == 13 && $('#%s').is(':focus')) {
-            $('#%s').click();
-          }
-        });
-      ", ns("term"), ns("pretraga")))
+          $(document).on('keypress', function(e) {
+            if(e.which == 13 && $('#%s').is(':focus')) {
+              $('#%s').click();
+            }
+          });
+        ", ns("term"), ns("pretraga")))
       )
     )
   )
 }
+
+
+
 
 # Server funkcija za modul
 MS_zemljisne_knjige <- function(input, output, session, f) {
