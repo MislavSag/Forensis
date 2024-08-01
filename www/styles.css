@@ -1,0 +1,8 @@
+.center-radio .radio-inline {
+  display: inline-block;
+  margin-right: 10px;
+  margin-left: 10px;
+}
+.center-radio {
+  text-align: center;
+}

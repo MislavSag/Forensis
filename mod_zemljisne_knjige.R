@@ -4,27 +4,66 @@ MUI_zemljisne_knjige <- function(id) {
   ns <- NS(id)
   fluidPage(
     tagList(
-      titlePanel("Zemljišne knjige RH"),
+      ######### OLD WAY ##########
+      # titlePanel("Zemljišne knjige RH"),
+      # fluidRow(
+      #   column(12, align = "center",
+      #          div(style = "display: inline-block; width: 80%; max-width: 600px;",
+      #              tags$div(style = "font-weight: bold; font-size: 16px; margin-bottom: 10px;",
+      #                       textInput(ns("term"), "Unesite pojam za pretragu katastra", value = "",
+      #                                 placeholder = "Unesite pojam i pritisnite Enter ili kliknite Pretraži"),
+      #                       radioButtons(ns("checkbox"), "Pretraži dio",
+      #                                    choices = list("Sve" = "0", "Dio A" = "1", "Dio B" = "2", "Dio C" = "3"),
+      #                                    selected = "0"),
+      #                       radioButtons(ns("history"), "Povijest",
+      #                                    choices = list("Da" = "true", "Ne" = "false"),
+      #                                    selected = "true"),
+      #                       if (Sys.info()["user"] == "Mislav") {
+      #                         sliderInput(ns("limit"), "Limit rezultata:", min = 50, max = 1000, value = 200, step = 50)
+      #                       }
+      #              ),
+      #              actionButton(ns("pretraga"), "Pretraži", style = "width:100%; font-weight: bold; font-size: 16px; background-color: #337ab7; color: white;")
+      #          )
+      #   )
+      # ),
+      ######### OLD WAY ##########
       fluidRow(
-        column(12, align = "center",
-               div(style = "display: inline-block; width: 80%; max-width: 600px;",
-                   tags$div(style = "font-weight: bold; font-size: 16px; margin-bottom: 10px;",
-                            textInput(ns("term"), "Unesite pojam za pretragu katastra", value = "",
-                                      placeholder = "Unesite pojam i pritisnite Enter ili kliknite Pretraži"),
-                            radioButtons(ns("checkbox"), "Pretraži dio",
-                                         choices = list("Sve" = "0", "Dio A" = "1", "Dio B" = "2", "Dio C" = "3"),
-                                         selected = "0"),
-                            radioButtons(ns("history"), "Povijest",
-                                         choices = list("Da" = "true", "Ne" = "false"),
-                                         selected = "true"),
-                            if (Sys.info()["user"] == "Mislav") {
-                              sliderInput(ns("limit"), "Limit rezultata:", min = 50, max = 1000, value = 200, step = 50)
-                            }
-                   ),
-                   actionButton(ns("pretraga"), "Pretraži", style = "width:100%; font-weight: bold; font-size: 16px; background-color: #337ab7; color: white;")
-               )
-        )
-      ),
+        column(width = 4, offset = 4,
+               align = "center",
+               h2("Brza pretraga nekretnina u zemljišnim knjigama i knjizi položenih ugovora u ",
+                  strong("Republici Hrvatskoj")),
+               br(),
+               br(),
+               textInput(ns("term"), "Unesite pojam", width = "100%"),
+               br(),
+               radioButtons(
+                 ns("checkbox"),
+                 "Pretraži dio",
+                 choices = list(
+                   "Sve" = "0",
+                   "Dio A" = "1",
+                   "Dio B" = "2",
+                   "Dio C" = "3"
+                 ),
+                 selected = "0",
+                 inline = TRUE
+               ),
+               br(),
+               radioButtons(
+                 ns("history"),
+                 "Povijest",
+                 choices = list("Da" = "true", "Ne" = "false"),
+                 selected = "true",
+                 inline = TRUE
+               ),
+               br(),
+               br(),
+               actionButton(ns("pretraga"), "Pretraži"),
+               br(),
+               br(),
+               style = 'text-align: center;'
+        )),
+
       fluidRow(
         column(12,
                div(style = "width: 100%;",

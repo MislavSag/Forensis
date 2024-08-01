@@ -4,18 +4,33 @@
 MUI_zemljisne_knjige_RS <- function(id) {
   ns <- NS(id)
   fluidPage(
-    titlePanel("Zemljišne knjige RS"),
+    ########### OLD ###########
+    # titlePanel("Zemljišne knjige RS"),
+    # fluidRow(
+    #   column(12, align = "center",
+    #          div(style = "display: inline-block; width: 80%; max-width: 600px;",
+    #              tags$div(style = "font-weight: bold; font-size: 16px; margin-bottom: 10px;",
+    #                       textInput(ns("search_term"), "Unesite naziv:", value = "",
+    #                                 placeholder = "Unesite naziv i pritisnite Enter ili kliknite Pretraži")
+    #              ),
+    #              actionButton(ns("search_button"), "Pretraži",
+    #                           style = "width:100%; font-weight: bold; font-size: 16px; background-color: #337ab7; color: white;")
+    #          )
+    #   )
+    # ),
+    ############ OLD #########
     fluidRow(
-      column(12, align = "center",
-             div(style = "display: inline-block; width: 80%; max-width: 600px;",
-                 tags$div(style = "font-weight: bold; font-size: 16px; margin-bottom: 10px;",
-                          textInput(ns("search_term"), "Unesite naziv:", value = "",
-                                    placeholder = "Unesite naziv i pritisnite Enter ili kliknite Pretraži")
-                 ),
-                 actionButton(ns("search_button"), "Pretraži", style = "width:100%; font-weight: bold; font-size: 16px; background-color: #337ab7; color: white;")
-             )
-      )
-    ),
+      column(width = 4, offset = 4,
+             h2("Brza pretraga nekretnina u zemljišnim knjigama ", strong("Republike Srpske")),
+             br(),
+             br(),
+             textInput(ns("search_term"), "Unesite pojam", width = "100%"),
+             br(),
+             actionButton(ns("search_button"), "Pretraži"),
+             br(),
+             br(),
+             style = 'text-align: center;'
+      )),
     fluidRow(
       column(12,
              div(style = "width: 100%;",
