@@ -13,7 +13,6 @@ params:
 ---
 
 ```{r setup, include=FALSE}
-
 library(shiny)
 library(bslib)
 library(DT)
@@ -28,6 +27,8 @@ library(stringr)
 
 # Učitavanje zasebnih skripti
 source("functions.R")
+
+print(Sys.getenv("SUDREG_API_USER"))
 
 # Postavljanje globalnih opcija za prikaz koda i upozorenja
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
@@ -156,7 +157,7 @@ if (nrow(zkrh_data) == 0) {
 }
 ```
 
-## Zemljišne knjige RH po imenu i prezimenu
+## Zemljišne knjige RH po nazivu
 ```{r zkrh naziv}
 
 # Učitajte podatke iz zemljišnih knjiga prema OIB-u
@@ -197,7 +198,7 @@ if (nrow(zkrh_data) == 0) {
 
 ```
 
-## Plovila RH po imenu i prezimenu
+## Plovila RH po nazivu
 ```{r plovila naziv}
 
 # Dohvaćanje rezultata pretrage iz baze podataka za plovila
@@ -224,7 +225,7 @@ if (nrow(plovila_data) == 0) {
 
 ```
 
-## Zemljišne knjige RS po imenu i prezimenu
+## Zemljišne knjige RS po nazivu
 ```{r zkrs naziv}
 
 # Dohvaćanje rezultata pretrage iz baze podataka za zemljišne knjige RS
@@ -249,7 +250,7 @@ if (nrow(zkrs_data) == 0) {
 }
 ```
 
-## Zemljišne knjige Federacija po imenu i prezimenu
+## Zemljišne knjige Federacija po nazivu
 ```{r zkF naziv}
 
 # Dohvaćanje rezultata pretrage iz baze podataka za zemljišne knjige Federacija
