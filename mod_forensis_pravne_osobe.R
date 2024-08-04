@@ -4,22 +4,6 @@ MUI_forensis_pravne_osobe <- function(id) {
   ns <- NS(id)
   fluidPage(
     useShinyFeedback(), # Omogućuje korištenje shinyFeedback-a
-    # titlePanel("Forensis Pravne Osobe"),
-    # fluidRow(
-    #   column(12, align = "center",
-    #          div(style = "display: inline-block; width: 80%; max-width: 600px;",
-    #              tags$div(style = "font-weight: bold; font-size: 16px; margin-bottom: 10px;",
-    #                       textInput(ns("oib"), "Unesite OIB:", value = "",
-    #                                 placeholder = "Unesite OIB i pritisnite Enter ili kliknite Generiraj dokument"),
-    #                       textInput(ns("naziv"), "Unesite naziv tvrtke:", value = "",
-    #                                 placeholder = "Unesite naziv tvrtke"),
-    #                       actionButton(ns("render_btn"), "Generiraj dokument", style = "width:100%; font-weight: bold; font-size: 16px; background-color: #337ab7; color: white;"),
-    #                       tags$p("Napomena: Generiranje izvještaja traje cca 2 minute.")
-    #              ),
-    #              uiOutput(ns("download_ui"))
-    #          )
-    #   )
-    # ),
     fluidRow(
       column(width = 4, offset = 4,
              align = "center",
@@ -27,6 +11,8 @@ MUI_forensis_pravne_osobe <- function(id) {
              br(),
              br(),
              textInput(ns("oib"), "OIB", width = "50%"),
+             br(),
+             textInput(ns("naziv"), "Naziv tvrtke", width = "50%"),
              br(),
              actionButton(ns("render_btn"), "Generiraj dokument"),
              br(),
