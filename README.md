@@ -14,8 +14,12 @@
 -   Pretraga plovila samo po nazivu
 -   Pravne osobe modul
 -   Skripta za GFI zasada sadrži samo konvertiranje originalnih GFI-jeva u utf-8
+-   Pravne osobe se pretražuju samo po OIB-u u aplikaciji, a qmd file uzima skraćenu tvrtku sa sudskog registra kao "naziv"
 
 ## TODO
+
+- izvještaj fizičke - napomena ako funkcija loadDataFiz ne pronalazi
+ime_prezime po OIB-u
 
 ## Q
 

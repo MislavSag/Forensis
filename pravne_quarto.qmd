@@ -8,8 +8,8 @@ format:
     toc-depth: 2
     self-contained: true
 params:
-  oib: "" # Default vrijednost je prazna (00637770898)
-  naziv: ""
+  oib: "18928523252" # Default vrijednost je prazna (00637770898)
+  naziv: "Podravka"
 ---
 
 ```{r setup, include=FALSE}
@@ -35,14 +35,14 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 
 # parametar 'oib' iz Quarto dokumenta
 oib <- params$oib
-naziv <- params$naziv
 
 # ove funkcjije vuku podatke - definirane su u skripti functions
 data <- pravne_osobe_API(oib)
 tablice <- prikazi_podatke_pravne_osobe(data)
 
+# naziv ću spremiti kao skraćenu tvrtku
+naziv <- tablice$skracena_tvrtka$Skracena_Tvrtka[1]
 ```
-
 
 # Podaci - Sudski registar
 

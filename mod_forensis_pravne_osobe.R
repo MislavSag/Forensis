@@ -1,5 +1,3 @@
-# mod_forensis_pravne_osobe.R
-
 MUI_forensis_pravne_osobe <- function(id) {
   ns <- NS(id)
   fluidPage(
@@ -11,8 +9,6 @@ MUI_forensis_pravne_osobe <- function(id) {
              br(),
              br(),
              textInput(ns("oib"), "OIB", width = "50%"),
-             br(),
-             textInput(ns("naziv"), "Naziv tvrtke", width = "50%"),
              br(),
              actionButton(ns("render_btn"), "Generiraj dokument"),
              br(),
@@ -32,11 +28,11 @@ MUI_forensis_pravne_osobe <- function(id) {
     tags$script(
       HTML(sprintf("
         $(document).on('keypress', function(e) {
-          if(e.which == 13 && ($('#%s').is(':focus') || $('#%s').is(':focus'))) {
+          if(e.which == 13 && $('#%s').is(':focus')) {
             $('#%s').click();
           }
         });
-      ", ns("oib"), ns("naziv"), ns("render_btn")))
+      ", ns("oib"), ns("render_btn")))
     )
   )
 }
@@ -63,11 +59,8 @@ MS_forensis_pravne_osobe <- function(input, output, session) {
       hideFeedback("oib")
     }
 
-    naziv <- input$naziv
-
     yaml_content <- paste0(
-      "oib: '", input$oib, "'\n",
-      "naziv: '", naziv, "'\n"
+      "oib: '", input$oib, "'\n"
     )
     param_file <- "params.yml"
     writeLines(yaml_content, param_file)
