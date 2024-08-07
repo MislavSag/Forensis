@@ -6,16 +6,28 @@
 -   rendering se vrši sa `system()` - terminal
 -   parametri koji su spremljeni u .yml file trebaju zapoćinjati bez "parms:"
 
+## GOTOVO:
+
+-   UI na sredini
+-   export iz DT u excel/pdf/print radi za sve stupce
+-   OIB checker i max 11 znakova
+-   Pretraga plovila samo po nazivu
+-   Pravne osobe modul
+-   Skripta za GFI zasada sadrži samo konvertiranje originalnih GFI-jeva u utf-8
+-   Pravne osobe se pretražuju samo po OIB-u u aplikaciji, a qmd file uzima skraćenu tvrtku sa sudskog registra kao "naziv"
+
 ## TODO
 
-- [] Pretraga po OIB-u 44339275803 u forensis dokument modulu vraca 404. Provjeriti zasto.
-- [] Tablice - staviti offset = 1 i width 10
-- [] Ako u forensis report pretragi ne pronađe ime i prezime i ime i prezime nije definirano,
-     onda pretraži samo po OIB-u i stavi napomenu na početku velikim slovima da nije pronađeno ime i prezime.
-     
+- izvještaj fizičke - napomena ako funkcija loadDataFiz ne pronalazi
+ime_prezime po OIB-u
+
+## Q
+
+-   rezultati zdravstvenog osiguranja prikazati u tablici ili u tekstu ? (trenutno je tablica)
+
 ## V2
-- porezni duznici
-- GFI
+
+-   porezni duznici
 
 ## Firebase
 
