@@ -20,6 +20,7 @@
 
 - izvještaj fizičke - napomena ako funkcija loadDataFiz ne pronalazi
 ime_prezime po OIB-u
+- [] Parallel processing for forensis report. Look at https://shiny.posit.co/r/articles/improve/nonblocking/index.html
 
 ## Q
 
