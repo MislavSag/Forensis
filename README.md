@@ -17,7 +17,7 @@
 -   Pravne osobe se pretražuju samo po OIB-u u aplikaciji, a qmd file uzima skraćenu tvrtku sa sudskog registra kao "naziv"
 -   Sve tablice su na sredini aplikacije
 -   radioButtons u zemljisnim knjigama su na sredini aplikacije
-_   Napomena ako loadDataFiz ne pronalazi
+-   Napomena ako loadDataFiz ne pronalazi
 ime_prezime po OIB-u - DODATNO - kako onda urediti fizicke_quarto ? Ako je parametar ime_prezime prazno, funkcije koje pretrazuju podatke po imenu i prezimenu (zk rh, plovila...) javljaju error
 
 ## TODO
