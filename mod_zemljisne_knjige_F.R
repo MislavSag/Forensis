@@ -4,18 +4,14 @@
 MUI_zemljisne_knjige_F <- function(id) {
   ns <- NS(id)
   fluidPage(
-    # titlePanel("Zemljišne knjige Federacija"),
-    # fluidRow(
-    #   column(12, align = "center",
-    #          div(style = "display: inline-block; width: 80%; max-width: 600px;",
-    #              tags$div(style = "font-weight: bold; font-size: 16px; margin-bottom: 10px;",
-    #                       textInput(ns("search_term"), "Unesite naziv:", value = "",
-    #                                 placeholder = "Unesite naziv i pritisnite Enter ili kliknite Pretraži")
-    #              ),
-    #              actionButton(ns("search_button"), "Pretraži", style = "width:100%; font-weight: bold; font-size: 16px; background-color: #337ab7; color: white;")
-    #          )
-    #   )
-    # ),
+    tags$head(
+      tags$style(HTML("
+        .table-container {
+          width: 80%;
+          margin: 0 auto;
+        }
+      "))
+    ),
     fluidRow(
       column(width = 4, offset = 4,
              h2("Brza pretraga nekretnina u zemljišnim knjigama ", strong("Federacije")),
@@ -31,7 +27,7 @@ MUI_zemljisne_knjige_F <- function(id) {
 
     fluidRow(
       column(12,
-             div(style = "width: 100%;",
+             div(class = "table-container",
                  uiOutput(ns("rezultati_tab")) %>% withSpinner(type = 8, color = "#0dc5c1")
              )
       )
@@ -74,7 +70,17 @@ MS_zemljisne_knjige_F <- function(input, output, session) {
   output$results_table <- renderDataTable({
     results <- pretraga_rezultati()
     if (!is.null(results) && nrow(results) > 0) {
-      DT_template(results)
+      datatable(results, escape = FALSE, options = list(
+        columnDefs = list(
+          list(targets = ncol(results),  # Dinamičko određivanje indeksa stupca Link
+               render = JS(
+                 "function(data, type, row) {
+                   return type === 'display' && data ? '<a href=\"' + data + '\" target=\"_blank\">Open</a>' : data;
+                 }"
+               )
+          )
+        )
+      ))
     }
   }, server = FALSE) # OVDJE JE DODANA POSTAVKA server = FALSE
 }

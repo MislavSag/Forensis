@@ -9,7 +9,7 @@ format:
     self-contained: true
 params:
   oib: "" # Default vrijednost
-  ime_prezime: "NA"
+  ime_prezime: ""
 ---
 
 ```{r setup, include=FALSE}

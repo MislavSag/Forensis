@@ -1,5 +1,6 @@
 # mod_zemljisne_knjige.R
 
+# UI funkcija za modul
 MUI_zemljisne_knjige <- function(id) {
   ns <- NS(id)
   fluidPage(
@@ -8,6 +9,14 @@ MUI_zemljisne_knjige <- function(id) {
         .table-container {
           width: 80%;
           margin: 0 auto;
+        }
+        .center-radio {
+          display: flex;
+          justify-content: center;
+          margin-bottom: 10px;
+        }
+        .center-radio .shiny-input-container {
+          margin: 0 15px;
         }
       "))
     ),
@@ -21,25 +30,29 @@ MUI_zemljisne_knjige <- function(id) {
                br(),
                textInput(ns("term"), "Unesite pojam", width = "100%"),
                br(),
-               radioButtons(
-                 ns("checkbox"),
-                 "Pretraži dio",
-                 choices = list(
-                   "Sve" = "0",
-                   "Dio A" = "1",
-                   "Dio B" = "2",
-                   "Dio C" = "3"
-                 ),
-                 selected = "0",
-                 inline = TRUE
+               div(class = "center-radio",
+                   radioButtons(
+                     ns("checkbox"),
+                     "Pretraži dio",
+                     choices = list(
+                       "Sve" = "0",
+                       "Dio A" = "1",
+                       "Dio B" = "2",
+                       "Dio C" = "3"
+                     ),
+                     selected = "0",
+                     inline = TRUE
+                   )
                ),
                br(),
-               radioButtons(
-                 ns("history"),
-                 "Povijest",
-                 choices = list("Da" = "true", "Ne" = "false"),
-                 selected = "true",
-                 inline = TRUE
+               div(class = "center-radio",
+                   radioButtons(
+                     ns("history"),
+                     "Povijest",
+                     choices = list("Da" = "true", "Ne" = "false"),
+                     selected = "true",
+                     inline = TRUE
+                   )
                ),
                br(),
                br(),
@@ -48,7 +61,6 @@ MUI_zemljisne_knjige <- function(id) {
                br(),
                style = 'text-align: center;'
         )),
-
       fluidRow(
         column(12,
                div(class = "table-container",

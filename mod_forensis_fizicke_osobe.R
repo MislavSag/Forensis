@@ -4,21 +4,6 @@ MUI_forensis_fizicke_osobe <- function(id) {
   ns <- NS(id)
   fluidPage(
     useShinyFeedback(), # Omogućuje korištenje shinyFeedback-a
-    # titlePanel("Forensis Fizičke Osobe"),
-    # fluidRow(
-    #   column(12, align = "center",
-    #          div(style = "display: inline-block; width: 80%; max-width: 600px;",
-    #              tags$div(style = "font-weight: bold; font-size: 16px; margin-bottom: 10px;",
-    #                       textInput(ns("oib"), "Unesite OIB:", value = "",
-    #                                 placeholder = "Unesite OIB i pritisnite Enter ili kliknite Generiraj dokument"),
-    #                       textInput(ns("ime_prezime"), "Unesite Ime i Prezime (neobavezno):", value = "")
-    #              ),
-    #              actionButton(ns("render_btn"), "Generiraj dokument", style = "width:100%; font-weight: bold; font-size: 16px; background-color: #337ab7; color: white;"),
-    #              tags$p("Napomena: Generiranje izvještaja traje cca 2 minute.")
-    #          ),
-    #          uiOutput(ns("download_ui"))
-    #   )
-    # ),
     fluidRow(
       column(width = 4, offset = 4,
              align = "center",
@@ -58,7 +43,7 @@ MUI_forensis_fizicke_osobe <- function(id) {
 MS_forensis_fizicke_osobe <- function(input, output, session) {
   ns <- session$ns
 
-  html_file = eventReactive(input$render_btn, {
+  observeEvent(input$render_btn, {
     req(input$oib)
 
     # Provjera duljine OIB-a
@@ -85,6 +70,8 @@ MS_forensis_fizicke_osobe <- function(input, output, session) {
         ime_prezime <- data$ime_prezime[1]
       } else {
         ime_prezime <- ""
+        showFeedbackWarning(inputId = "ime_prezime", text = "Ime i prezime nisu pronađeni, molim vas unesite ime i prezime u tražilicu.
+                            Izvještaj će prikazati rezultate samo za uneseni OIB")
       }
     }
 
@@ -95,35 +82,40 @@ MS_forensis_fizicke_osobe <- function(input, output, session) {
     param_file <- "params.yml"
     writeLines(yaml_content, param_file)
 
+    # Debug ispis YAML sadržaja
+    cat("YAML Content:\n", yaml_content, "\n")
+
     file_name_ = paste0(input$oib, '_fizicke.html')
     print(file_name_)
 
     render_command <- paste('quarto render fizicke_quarto.qmd --execute-params', param_file,
                             '--output ', file_name_,
                             '--output-dir reports')
+
+    # Debug ispis render naredbe
+    cat("Render Command:\n", render_command, "\n")
+
     system(render_command, wait = TRUE)
 
-    return(file_name_)
-  })
+    output$html_output <- renderUI({
+      invalidateLater(180000, session)
+      tags$iframe(style = "height:1000px; width:100%",
+                  src = sprintf("my_resource/%s", file_name_))
+    })
 
-  output$html_output <- renderUI({
-    invalidateLater(180000, session)
-    tags$iframe(style = "height:1000px; width:100%",
-                src = sprintf("my_resource/%s", html_file()))
-  })
+    output$download_ui <- renderUI({
+      if (!is.null(file_name_)) {
+        downloadButton(ns("download_btn"), "Preuzmi dokument", class = "btn btn-success")
+      }
+    })
 
-  output$download_ui <- renderUI({
-    if (!is.null(html_file())) {
-      downloadButton(ns("download_btn"), "Preuzmi dokument", class = "btn btn-success")
-    }
+    output$download_btn <- downloadHandler(
+      filename = function() {
+        file_name_
+      },
+      content = function(file) {
+        file.copy(file.path("reports", file_name_), file)
+      }
+    )
   })
-
-  output$download_btn <- downloadHandler(
-    filename = function() {
-      html_file()
-    },
-    content = function(file) {
-      file.copy(file.path("reports", html_file()), file)
-    }
-  )
 }

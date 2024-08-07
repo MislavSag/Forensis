@@ -1,19 +1,17 @@
+# mod registar plovila
+
 # UI funkcija za modul
 MUI_registar_plovila <- function(id) {
   ns <- NS(id)
   fluidPage(
-    # titlePanel("Pretraga plovila RH"),
-    # fluidRow(
-    #   column(12, align = "center",
-    #          div(style = "display: inline-block; width: 80%; max-width: 600px;",
-    #              tags$div(style = "font-weight: bold; font-size: 16px; margin-bottom: 10px;",
-    #                       textInput(ns("search_term"), "Unesite naziv:", value = "",
-    #                                 placeholder = "Unesite naziv i pritisnite Enter ili kliknite na Pretraži")
-    #              ),
-    #              actionButton(ns("search_button"), "Pretraži", style = "width:100%; font-weight: bold; font-size: 16px; background-color: #337ab7; color: white;")
-    #          )
-    #   )
-    # ),
+    tags$head(
+      tags$style(HTML("
+        .table-container {
+          width: 80%;
+          margin: 0 auto;
+        }
+      "))
+    ),
     fluidRow(
       column(width = 4, offset = 4,
              h2("Brza pretraga plovila u registru plovila"),
@@ -28,7 +26,7 @@ MUI_registar_plovila <- function(id) {
       )),
     fluidRow(
       column(12,
-             div(style = "width: 100%;",
+             div(class = "table-container",
                  uiOutput(ns("rezultati_tab")) %>% withSpinner(type = 8, color = "#0dc5c1")
              )
       )
