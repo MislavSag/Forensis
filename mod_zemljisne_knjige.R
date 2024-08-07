@@ -65,7 +65,7 @@ MUI_zemljisne_knjige <- function(id) {
         )),
 
       fluidRow(
-        column(12,
+        column(width = 10, offset = 1,
                div(style = "width: 100%;",
                    uiOutput(ns("rezultati_tab")) %>% shinycssloaders::withSpinner(type = 8, color = "#0dc5c1")
                )
