@@ -7,7 +7,7 @@ MUI_zemljisne_knjige_RS <- function(id) {
     tags$head(
       tags$style(HTML("
         .table-container {
-          width: 80%;
+          width: 100%;
           margin: 0 auto;
         }
       "))
@@ -70,15 +70,7 @@ MS_zemljisne_knjige_RS <- function(input, output, session) {
     results <- pretraga_rezultati()
     if (!is.null(results) && nrow(results) > 0) {
       datatable(results, escape = FALSE, options = list(
-        columnDefs = list(
-          list(targets = ncol(results),  # Dinamičko određivanje indeksa stupca Link
-               render = JS(
-                 "function(data, type, row) {
-                   return type === 'display' && data ? '<a href=\"' + data + '\" target=\"_blank\">Open</a>' : data;
-                 }"
-               )
-          )
-        )
+        autoWidth = TRUE  # Omogućava automatsko podešavanje širine stupaca
       ))
     }
   }, server = FALSE)

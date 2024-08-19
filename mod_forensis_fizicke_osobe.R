@@ -43,7 +43,7 @@ MUI_forensis_fizicke_osobe <- function(id) {
 MS_forensis_fizicke_osobe <- function(input, output, session) {
   ns <- session$ns
 
-  observeEvent(input$render_btn, {
+  html_file <- eventReactive(input$render_btn, {
     req(input$oib)
 
     # Provjera duljine OIB-a
@@ -70,8 +70,7 @@ MS_forensis_fizicke_osobe <- function(input, output, session) {
         ime_prezime <- data$ime_prezime[1]
       } else {
         ime_prezime <- ""
-        showFeedbackWarning(inputId = "ime_prezime", text = "Ime i prezime nisu pronađeni, molim vas unesite ime i prezime u tražilicu.
-                            Izvještaj će prikazati rezultate samo za uneseni OIB")
+        showFeedbackWarning(inputId = "ime_prezime", text = "Ime i prezime nisu pronađeni, molim vas unesite ime i prezime u tražilicu. Izvještaj će prikazati rezultate samo za uneseni OIB")
       }
     }
 
@@ -82,40 +81,41 @@ MS_forensis_fizicke_osobe <- function(input, output, session) {
     param_file <- "params.yml"
     writeLines(yaml_content, param_file)
 
-    # Debug ispis YAML sadržaja
     cat("YAML Content:\n", yaml_content, "\n")
 
-    file_name_ = paste0(input$oib, '_fizicke.html')
+    file_name_ <- paste0(input$oib, '_fizicke.html')
     print(file_name_)
 
     render_command <- paste('quarto render fizicke_quarto.qmd --execute-params', param_file,
                             '--output ', file_name_,
                             '--output-dir reports')
 
-    # Debug ispis render naredbe
     cat("Render Command:\n", render_command, "\n")
 
     system(render_command, wait = TRUE)
 
-    output$html_output <- renderUI({
-      invalidateLater(180000, session)
-      tags$iframe(style = "height:1000px; width:100%",
-                  src = sprintf("my_resource/%s", file_name_))
-    })
-
-    output$download_ui <- renderUI({
-      if (!is.null(file_name_)) {
-        downloadButton(ns("download_btn"), "Preuzmi dokument", class = "btn btn-success")
-      }
-    })
-
-    output$download_btn <- downloadHandler(
-      filename = function() {
-        file_name_
-      },
-      content = function(file) {
-        file.copy(file.path("reports", file_name_), file)
-      }
-    )
+    return(file_name_)
   })
+
+  output$html_output <- renderUI({
+    req(html_file())
+    invalidateLater(180000, session)
+    tags$iframe(style = "height:1000px; width:100%",
+                src = sprintf("my_resource/%s", html_file()))
+  })
+
+  output$download_ui <- renderUI({
+    req(html_file())
+    downloadButton(ns("download_btn"), "Preuzmi dokument", class = "btn btn-success")
+  })
+
+  output$download_btn <- downloadHandler(
+    filename = function() {
+      html_file()
+    },
+    content = function(file) {
+      file.copy(file.path("reports", html_file()), file)
+    }
+  )
 }
+
