@@ -22,9 +22,10 @@ ime_prezime po OIB-u - DODATNO - kako onda urediti fizicke_quarto ? Ako je param
 
 ## TODO
 
-- izvještaj fizičke - napomena ako funkcija loadDataFiz ne pronalazi
+- [] izvještaj fizičke - napomena ako funkcija loadDataFiz ne pronalazi
 ime_prezime po OIB-u
 - [] Parallel processing for forensis report. Look at https://shiny.posit.co/r/articles/improve/nonblocking/index.html
+- [] dodati expand_relations parametar u pravne_osobe_API funkciju
 
 ## Q
 
