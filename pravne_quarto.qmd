@@ -8,8 +8,7 @@ format:
     toc-depth: 2
     self-contained: true
 params:
-  oib: "18928523252" # Default vrijednost je prazna (00637770898)
-  naziv: "Podravka"
+  oib: "62226620908" # Default vrijednost je prazna (00637770898)
 ---
 
 ```{r setup, include=FALSE}
@@ -88,8 +87,20 @@ if (!is.null(tablice$email_adrese)) {
 
 ```{r poslovanje}
 if (!is.null(tablice$predmeti_poslovanja)) {
-  datatable(tablice$predmeti_poslovanja, options = list(pageLength = 5), caption = "Predmeti poslovanja")
+  if (!is.null(tablice$predmeti_poslovanja$nacionalna_klasifikacija_djelatnosti)) {
+    # Kombiniraj djelatnost_rbr, djelatnost_tekst i puni_naziv iz nacionalne_klasifikacije_djelatnosti
+    df <- data.frame(
+      Djelatnost_RBR = tablice$predmeti_poslovanja$djelatnost_rbr,
+      Djelatnost_Tekst = tablice$predmeti_poslovanja$djelatnost_tekst,
+      NKD_Puni_Naziv = tablice$predmeti_poslovanja$nacionalna_klasifikacija_djelatnosti$puni_naziv
+    )
+    datatable(df, options = list(pageLength = 5), caption = "Predmeti poslovanja s NKD")
+  } else {
+    # Prikaži samo predmeti_poslovanja bez NKD
+    datatable(tablice$predmeti_poslovanja, options = list(pageLength = 5), caption = "Predmeti poslovanja")
+  }
 }
+
 ```
 
 ## Temeljni kapital

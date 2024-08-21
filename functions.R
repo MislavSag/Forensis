@@ -299,6 +299,10 @@ pravne_osobe_API <- function(oib) {
     endpoint <- "/detalji_subjekta"
     url <- paste0(base_url, endpoint, "?tip_identifikatora=oib&identifikator=", oib)
 
+    # Dodavanje query parametara u URL
+    # expand_relations=true se koristi za šifranik sud reg
+    url <- paste0(base_url, endpoint, "?tip_identifikatora=oib&identifikator=", oib, "&expand_relations=true")
+
     # Slanje GET zahtjeva na API s autentifikacijom
     response <- GET(url, add_headers(Authorization = paste("Bearer", access_token)))
 
@@ -319,11 +323,20 @@ pravne_osobe_API <- function(oib) {
 # bez toga se moze javiti error
 prikazi_podatke_pravne_osobe <- function(data) {
   if (!is.null(data)) {
-    # Provjera i popunjavanje podataka
+    # Extracting 'naziv' from sud_nadlezan and sud_sluzba
+    sud_nadlezan_naziv <- if (!is.null(data$sud_nadlezan$naziv)) data$sud_nadlezan$naziv else NA
+    sud_sluzba_naziv <- if (!is.null(data$sud_sluzba$naziv)) data$sud_sluzba$naziv else NA
+
+    # Extracting 'znacenje' from postupak
+    postupak_zancenje <- if (!is.null(data$postupak$postupak$znacenje)) data$postupak$postupak$znacenje else NA
+
+    # Extracting 'naziv' and 'kratica' from pravni_oblik
+    pravni_oblik_naziv <- if (!is.null(data$pravni_oblik$vrsta_pravnog_oblika$naziv)) data$pravni_oblik$vrsta_pravnog_oblika$naziv else NA
+    pravni_oblik_kratica <- if (!is.null(data$pravni_oblik$vrsta_pravnog_oblika$kratica)) data$pravni_oblik$vrsta_pravnog_oblika$kratica else NA
+
+    # Existing fields
     mbs <- if (!is.null(data$mbs)) data$mbs else NA
     status <- if (!is.null(data$status)) data$status else NA
-    sud_id_nadlezan <- if (!is.null(data$sud_id_nadlezan)) data$sud_id_nadlezan else NA
-    sud_id_sluzba <- if (!is.null(data$sud_id_sluzba)) data$sud_id_sluzba else NA
     oib <- if (!is.null(data$oib)) data$oib else NA
     mb <- if (!is.null(data$mb)) data$mb else NA
     potpuni_mbs <- if (!is.null(data$potpuni_mbs)) data$potpuni_mbs else NA
@@ -335,14 +348,33 @@ prikazi_podatke_pravne_osobe <- function(data) {
     datum_osnivanja <- if (!is.null(data$datum_osnivanja)) data$datum_osnivanja else NA
     vrijeme_zadnje_izmjene <- if (!is.null(data$vrijeme_zadnje_izmjene)) data$vrijeme_zadnje_izmjene else NA
 
-    # Pretvaranje podataka u tablice
+    # Extracting valuta naziv from temeljni_kapitali
+    temeljni_kapital_iznos <- if (!is.null(data$temeljni_kapitali$iznos)) data$temeljni_kapitali$iznos else NA
+    temeljni_kapital_valuta_naziv <- if (!is.null(data$temeljni_kapitali$valuta$naziv)) data$temeljni_kapitali$valuta$naziv else NA
+
+    temeljni_kapitali <- data.frame(
+      Iznos = temeljni_kapital_iznos,
+      Valuta = temeljni_kapital_valuta_naziv
+    )
+
+    # Handling GFI, extracting 'znacenje' from 'vrsta_dokumenta' if exists
+    if (!is.null(data$gfi)) {
+      gfi <- data$gfi
+      if (!is.null(gfi$vrsta_dokumenta$znacenje)) {
+        gfi$vrsta_dokumenta <- gfi$vrsta_dokumenta$znacenje
+      }
+    } else {
+      gfi <- data.frame()  # Returning an empty data.frame if gfi is null
+    }
+
+    # Updating the DataFrame
     opci_podaci <- data.frame(
-      Ključ = c("MBS", "Status", "Sud ID Nadležan", "Sud ID Služba", "OIB", "MB", "Potpuni MBS",
+      Ključ = c("MBS", "Status", "Sud Nadležan", "Sud Služba", "OIB", "MB", "Potpuni MBS",
                 "Potpuni OIB", "Ino Podružnica", "Stečajna Masa", "Likvidacijska Masa",
-                "Glavna Djelatnost", "Datum Osnivanja", "Vrijeme Zadnje Izmjene"),
-      Vrijednost = c(mbs, status, sud_id_nadlezan, sud_id_sluzba, oib, mb,
+                "Glavna Djelatnost", "Postupak", "Pravni Oblik", "Kratica", "Datum Osnivanja", "Vrijeme Zadnje Izmjene"),
+      Vrijednost = c(mbs, status, sud_nadlezan_naziv, sud_sluzba_naziv, oib, mb,
                      potpuni_mbs, potpuni_oib, ino_podruznica, stecajna_masa,
-                     likvidacijska_masa, glavna_djelatnost, datum_osnivanja, vrijeme_zadnje_izmjene)
+                     likvidacijska_masa, glavna_djelatnost, postupak_zancenje, pravni_oblik_naziv, pravni_oblik_kratica, datum_osnivanja, vrijeme_zadnje_izmjene)
     )
 
     tvrtka <- data.frame(
@@ -366,13 +398,9 @@ prikazi_podatke_pravne_osobe <- function(data) {
 
     predmeti_poslovanja <- as.data.frame(data$predmeti_poslovanja)
 
-    temeljni_kapitali <- as.data.frame(data$temeljni_kapitali)
-
-    gfi <- as.data.frame(data$gfi)
-
     promjene <- as.data.frame(data$promjene)
 
-    # Kreiraj listu s tablicama
+    # Returning the list of tables
     list(
       opci_podaci = opci_podaci,
       tvrtka = tvrtka,
@@ -388,3 +416,7 @@ prikazi_podatke_pravne_osobe <- function(data) {
     NULL
   }
 }
+
+
+
+
