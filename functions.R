@@ -7,12 +7,12 @@ sudreg_api_user <- Sys.getenv("SUDREG_API_USER") # sudski registar
 sudreg_api_pass <- Sys.getenv("SUDREG_API_PASS") # sudski registar
 
 # Funkcija za DATA API
-dataApi <- function(oib, url){
+dataApi <- function(oib, url, query = NULL){
   req = RETRY(
     "GET",
     url = paste0('http://api.data-api.io/v1/', url, '/'),
     add_headers('x-dataapi-key' = "59dd75a6525e"),
-    query = list(oib = oib),
+    query = c(list(oib = oib), query),
     timeout(180),
     times = 6
   )
@@ -271,9 +271,13 @@ poslovne_funkcije <- function(oib) {
       subjekti <- as.data.frame(do.call(base::rbind, req))
       subjekti$isActive <- NULL
       colnames(subjekti)[which(colnames(subjekti) == "adresa")] <- "adresa_subjekta"
-      funkcije_all <- merge(x = data, y = subjekti, by.x = "subjektOib", by.y = "oib", all.x = TRUE, all.y=FALSE)
+      if (length(subjekti) > 0) {
+        funkcije_all <- merge(x = data, y = subjekti, by.x = "subjektOib", by.y = "oib", all.x = TRUE, all.y=FALSE)
+        funkcije_data <- funkcije_all[,c("naziv", "funkcija", "isActive")]
+      } else {
+        funkcije_data <- cbind.data.frame(naziv = NA, data[,c("funkcija", "isActive")])
+      }
       # za tablicu
-      funkcije_data <- funkcije_all[,c("naziv", "funkcija", "isActive")]
       colnames(funkcije_data) <- c("Naziv subjekta", "Funkcija", "Aktivnost funkcije")
       return(funkcije_data)
     }

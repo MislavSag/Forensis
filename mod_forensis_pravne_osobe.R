@@ -71,6 +71,7 @@ MS_forensis_pravne_osobe <- function(input, output, session) {
 
   output$download_ui <- renderUI({
     # Uklonjen req() za testiranje
+    # req(generate_report_task())
     downloadButton(ns("download_btn"), "Preuzmi dokument", class = "btn btn-success")
   })
 
