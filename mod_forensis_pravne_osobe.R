@@ -3,18 +3,14 @@ MUI_forensis_pravne_osobe <- function(id) {
   fluidPage(
     useShinyFeedback(), # Omogućuje korištenje shinyFeedback-a
     fluidRow(
-      column(width = 4, offset = 4,
-             align = "center",
-             h2("Izrada forenzičkog izvještaja za", strong("pravne"), " osobe"),
-             br(),
+      column(width = 4, offset = 4, align = "center",
+             h2("Izrada forenzičkog izvještaja za", strong("pravne"), "osobe"),
              br(),
              textInput(ns("oib"), "OIB", width = "50%"),
              br(),
-             actionButton(ns("render_btn"), "Generiraj dokument"),
-             br(),
+             input_task_button(ns("render_btn"), "Generiraj dokument"),
              br(),
              uiOutput(ns("download_ui"))
-             # style = 'text-align: center;'
       )),
     fluidRow(
       column(12,
@@ -24,15 +20,6 @@ MUI_forensis_pravne_osobe <- function(id) {
                  )
              )
       )
-    ),
-    tags$script(
-      HTML(sprintf("
-        $(document).on('keypress', function(e) {
-          if(e.which == 13 && $('#%s').is(':focus')) {
-            $('#%s').click();
-          }
-        });
-      ", ns("oib"), ns("render_btn")))
     )
   )
 }
@@ -40,67 +27,59 @@ MUI_forensis_pravne_osobe <- function(id) {
 MS_forensis_pravne_osobe <- function(input, output, session) {
   ns <- session$ns
 
-  html_file = eventReactive(input$render_btn, {
-    req(input$oib)
+  generate_report_task <- ExtendedTask$new(function(oib) {
+    future_promise({
+      cat("Task started\n")
 
-    # Provjera duljine OIB-a
-    if (nchar(input$oib) != 11) {
-      showFeedbackDanger(inputId = "oib", text = "OIB mora imati točno 11 znakova.")
-      return(NULL)
-    } else {
-      hideFeedback("oib")
-    }
+      # Za sada uklanjamo shinyFeedback funkcije kako bismo ispitali problem
+      if (nchar(oib) != 11) {
+        stop("OIB mora imati točno 11 znakova.")
+      }
 
-    # Provjera valjanosti OIB-a
-    if (oib_checker(input$oib) != 1) {
-      showFeedbackDanger(inputId = "oib", text = "Neispravan OIB.")
-      return(NULL)
-    } else {
-      hideFeedback("oib")
-    }
+      if (oib_checker(oib) != 1) {
+        stop("Neispravan OIB.")
+      }
 
-    yaml_content <- paste0(
-      "oib: '", input$oib, "'\n"
-    )
-    param_file <- "params.yml"
-    writeLines(yaml_content, param_file)
+      yaml_content <- paste0("oib: '", oib, "'\n")
+      param_file <- "params.yml"
+      writeLines(yaml_content, param_file)
+      cat("YAML file written\n")
 
-    # Debug ispis YAML sadržaja
-    cat("YAML Content:\n", yaml_content, "\n")
+      file_name_ <- paste0(oib, '_pravne.html')
+      render_command <- paste('quarto render pravne_quarto.qmd --execute-params', param_file,
+                              '--output ', file_name_,
+                              '--output-dir reports')
 
-    file_name_ = paste0(input$oib, '_pravne.html')
-    print(file_name_)
+      cat("Render command: ", render_command, "\n")
+      system(render_command, wait = TRUE)
 
-    render_command <- paste('quarto render pravne_quarto.qmd --execute-params', param_file,
-                            '--output ', file_name_,
-                            '--output-dir reports')
+      cat("Task completed, file generated: ", file_name_, "\n")
+      return(file_name_)
+    })
+  }) |> bind_task_button(ns("render_btn"))
 
-    # Debug ispis render naredbe
-    cat("Render Command:\n", render_command, "\n")
-
-    system(render_command, wait = TRUE)
-
-    return(file_name_)
+  observeEvent(input$render_btn, {
+    cat("Invoke task with OIB: ", input$oib, "\n")
+    generate_report_task$invoke(input$oib)
   })
 
   output$html_output <- renderUI({
-    invalidateLater(180000, session)
+    # Uklonjen req() za testiranje
     tags$iframe(style = "height:1000px; width:100%",
-                src = sprintf("my_resource/%s", html_file()))
+                src = sprintf("my_resource/%s", generate_report_task$result()))
   })
 
   output$download_ui <- renderUI({
-    if (!is.null(html_file())) {
-      downloadButton(ns("download_btn"), "Preuzmi dokument", class = "btn btn-success")
-    }
+    # Uklonjen req() za testiranje
+    downloadButton(ns("download_btn"), "Preuzmi dokument", class = "btn btn-success")
   })
 
   output$download_btn <- downloadHandler(
     filename = function() {
-      html_file()
+      generate_report_task$result()
     },
     content = function(file) {
-      file.copy(file.path("reports", html_file()), file)
+      file.copy(file.path("reports", generate_report_task$result()), file)
     }
   )
 }

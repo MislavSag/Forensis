@@ -17,7 +17,8 @@ ime_prezime po OIB-u - DODATNO - kako onda urediti fizicke_quarto ? Ako je param
 
 - [] Parallel processing for forensis report. Look at https://shiny.posit.co/r/articles/improve/nonblocking/index.html
 - [] GFI izvještaji
-
+- error pravne osobe: 18290972213
+- error fizičke osobe: 42531653196
 
 ## V2
 
