@@ -1,0 +1,106 @@
+MUI_forensis_pravne_osobe - function(id) {
+  ns - NS(id)
+  fluidPage(
+    useShinyFeedback(), # Omogućuje korištenje shinyFeedback-a
+    fluidRow(
+      column(width = 4, offset = 4,
+             align = center,
+             h2(Izrada forenzičkog izvještaja za, strong(pravne),  osobe),
+             br(),
+             br(),
+             textInput(ns(oib), OIB, width = 50%),
+             br(),
+             actionButton(ns(render_btn), Generiraj dokument),
+             br(),
+             br(),
+             uiOutput(ns(download_ui))
+             # style = 'text-align center;'
+      )),
+    fluidRow(
+      column(12,
+             div(style = width 100%;,
+                 shinycssloaderswithSpinner(
+                   uiOutput(ns(html_output))
+                 )
+             )
+      )
+    ),
+    tags$script(
+      HTML(sprintf(
+        $(document).on('keypress', function(e) {
+          if(e.which == 13 && $('#%s').is('focus')) {
+            $('#%s').click();
+          }
+        });
+      , ns(oib), ns(render_btn)))
+    )
+  )
+}
+
+MS_forensis_pravne_osobe - function(input, output, session) {
+  ns - session$ns
+
+  html_file = eventReactive(input$render_btn, {
+    req(input$oib)
+
+    # Provjera duljine OIB-a
+    if (nchar(input$oib) != 11) {
+      showFeedbackDanger(inputId = oib, text = OIB mora imati točno 11 znakova.)
+      return(NULL)
+    } else {
+      hideFeedback(oib)
+    }
+
+    # Provjera valjanosti OIB-a
+    if (oib_checker(input$oib) != 1) {
+      showFeedbackDanger(inputId = oib, text = Neispravan OIB.)
+      return(NULL)
+    } else {
+      hideFeedback(oib)
+    }
+
+    yaml_content - paste0(
+      oib ', input$oib, 'n
+    )
+    param_file - params.yml
+    writeLines(yaml_content, param_file)
+
+    # Debug ispis YAML sadržaja
+    cat(YAML Contentn, yaml_content, n)
+
+    file_name_ = paste0(input$oib, '_pravne.html')
+    print(file_name_)
+
+    render_command - paste('quarto render pravne_quarto.qmd --execute-params', param_file,
+                            '--output ', file_name_,
+                            '--output-dir reports')
+
+    # Debug ispis render naredbe
+    cat(Render Commandn, render_command, n)
+
+    system(render_command, wait = TRUE)
+
+    return(file_name_)
+  })
+
+  output$html_output - renderUI({
+    invalidateLater(180000, session)
+    tags$iframe(style = height1000px; width100%,
+                src = sprintf(my_resource%s, html_file()))
+  })
+
+  output$download_ui - renderUI({
+    if (!is.null(html_file())) {
+      downloadButton(ns(download_btn), Preuzmi dokument, class = btn btn-success)
+    }
+  })
+
+  output$download_btn - downloadHandler(
+    filename = function() {
+      html_file()
+    },
+    content = function(file) {
+      file.copy(file.path(reports, html_file()), file)
+    }
+  )
+}
