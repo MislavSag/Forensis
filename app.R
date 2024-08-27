@@ -10,9 +10,13 @@ require(shinyFeedback)
 require(RMySQL)
 require(stringr)
 require(shinyjs)
-require(firebase)
+# require(firebase)
 require(promises)  # Za asinkrono programiranje
 require(future)    # Za paralelno izvršavanje zadataka
+
+
+# Postavljanje plana za future
+future::plan(multisession)
 
 # Provjera postojanja direktorija i kreiranje ako ne postoji
 if (!dir.exists("reports")) {

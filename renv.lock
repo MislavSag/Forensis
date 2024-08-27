@@ -1,6 +1,6 @@
 {
   "R": {
-    "Version": "4.4.0",
+    "Version": "4.4.1",
     "Repositories": [
       {
         "Name": "CRAN",
@@ -506,22 +506,6 @@
       "Repository": "CRAN",
       "Hash": "aa5e1cd11c2d15497494c5292d7ffcc8"
     },
-    "firebase": {
-      "Package": "firebase",
-      "Version": "1.0.2",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "base64enc",
-        "cli",
-        "htmltools",
-        "jose",
-        "jsonlite",
-        "openssl",
-        "shiny"
-      ],
-      "Hash": "fc83e4c480675059e6c93b07ecc9dab1"
-    },
     "fontawesome": {
       "Package": "fontawesome",
       "Version": "0.5.2",
@@ -852,17 +836,6 @@
         "utils"
       ],
       "Hash": "0080607b4a1a7b28979aecef976d8bc2"
-    },
-    "jose": {
-      "Package": "jose",
-      "Version": "1.2.0",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "jsonlite",
-        "openssl"
-      ],
-      "Hash": "acf397c005e2d96a4b7616bf7dfc3112"
     },
     "jquerylib": {
       "Package": "jquerylib",
