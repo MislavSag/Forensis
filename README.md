@@ -19,6 +19,8 @@ ime_prezime po OIB-u - DODATNO - kako onda urediti fizicke_quarto ? Ako je param
 - [] GFI izvještaji
 - error pravne osobe: 18290972213
 - error fizičke osobe: 42531653196
+- [] poslati shinyapps.io supportu upit o paralelnom izvrsavanju zadataka. Moze se poslatt isti upit i na formum ili otvoriti github issue.
+- [] sakriti gumb na pocetku. pokayuje se samo kada se izvjetaj izgenerira.
 
 ## V2
 
