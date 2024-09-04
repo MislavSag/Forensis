@@ -12,11 +12,9 @@ require(stringr)
 require(shinyjs)
 # require(firebase)
 require(promises)  # Za asinkrono programiranje
-require(future)    # Za paralelno izvršavanje zadataka
-
-
+require(future)  # Za asinkrono programiranje
 # Postavljanje plana za future
-future::plan(multisession)
+future::plan(multisession, workers = 2)
 
 # Provjera postojanja direktorija i kreiranje ako ne postoji
 if (!dir.exists("reports")) {

@@ -5,7 +5,7 @@ account: forensis
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 12237631
-bundleId: 9030222
+bundleId: 9037934
 url: https://forensis.shinyapps.io/ForensisTest/
 version: 1
 asMultiple: FALSE
