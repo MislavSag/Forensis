@@ -8,7 +8,8 @@ MUI_forensis_pravne_osobe <- function(id) {
              br(),
              textInput(ns("oib"), "OIB", width = "50%"),
              br(),
-             input_task_button(ns("render_btn"), "Generiraj dokument"),
+             actionButton(ns("render_btn"), "Generiraj dokument"),
+             br(),
              br(),
              uiOutput(ns("download_ui"))
       )),
@@ -78,6 +79,7 @@ MS_forensis_pravne_osobe <- function(input, output, session) {
   })
 
   output$download_ui <- renderUI({
+    req(generate_report_task$result())
     downloadButton(ns("download_btn"), "Preuzmi dokument", class = "btn btn-success")
   })
 

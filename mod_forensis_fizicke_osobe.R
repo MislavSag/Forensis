@@ -111,6 +111,7 @@ MS_forensis_fizicke_osobe <- function(input, output, session) {
   })
 
   output$download_ui <- renderUI({
+    req(generate_report_task$result())
     downloadButton(ns("download_btn"), "Preuzmi dokument", class = "btn btn-success")
   })
 
