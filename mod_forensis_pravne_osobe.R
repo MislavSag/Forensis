@@ -20,6 +20,15 @@ MUI_forensis_pravne_osobe <- function(id) {
                  )
              )
       )
+    ),
+    tags$script(
+      HTML(sprintf("
+        $(document).on('keypress', function(e) {
+          if(e.which == 13 && $('#%s').is(':focus')) {
+            $('#%s').click();
+          }
+        });
+      ", ns("oib"), ns("render_btn")))
     )
   )
 }
@@ -31,7 +40,7 @@ MS_forensis_pravne_osobe <- function(input, output, session) {
     future_promise({
       cat("Task started\n")
 
-      # Za sada uklanjamo shinyFeedback funkcije kako bismo ispitali problem
+      # Provjera OIB-a
       if (nchar(oib) != 11) {
         stop("OIB mora imati točno 11 znakova.")
       }
@@ -64,14 +73,11 @@ MS_forensis_pravne_osobe <- function(input, output, session) {
   })
 
   output$html_output <- renderUI({
-    # Uklonjen req() za testiranje
     tags$iframe(style = "height:1000px; width:100%",
                 src = sprintf("my_resource/%s", generate_report_task$result()))
   })
 
   output$download_ui <- renderUI({
-    # Uklonjen req() za testiranje
-    # req(generate_report_task())
     downloadButton(ns("download_btn"), "Preuzmi dokument", class = "btn btn-success")
   })
 

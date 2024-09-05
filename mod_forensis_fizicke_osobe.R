@@ -1,4 +1,4 @@
-# mod_forensis_fizicke_osobe.R
+# modul fizičke osobe
 
 MUI_forensis_fizicke_osobe <- function(id) {
   ns <- NS(id)
@@ -7,7 +7,7 @@ MUI_forensis_fizicke_osobe <- function(id) {
     fluidRow(
       column(width = 4, offset = 4,
              align = "center",
-             h2("Izrada forenzičkog izvještaja za", strong("fizičke"), " osobe"),
+             h2("Izrada forenzičkog izvještaja za", strong("fizičke"), "osobe"),
              br(),
              br(),
              textInput(ns("oib"), "OIB", width = "50%"),
@@ -43,79 +43,83 @@ MUI_forensis_fizicke_osobe <- function(id) {
 MS_forensis_fizicke_osobe <- function(input, output, session) {
   ns <- session$ns
 
-  html_file <- eventReactive(input$render_btn, {
-    req(input$oib)
+  # Kreiranje zadatka za generiranje izvještaja
+  generate_report_task <- ExtendedTask$new(function(oib, ime_prezime) {
+    future_promise({
+      cat("Task started\n")
 
-    # Provjera duljine OIB-a
-    if (nchar(input$oib) != 11) {
-      showFeedbackDanger(inputId = "oib", text = "OIB mora imati točno 11 znakova.")
-      return(NULL)
-    } else {
-      hideFeedback("oib")
-    }
+      # Postavljanje mysql opcija unutar paralelnog procesa
+      options(mysql = list(
+        "host" = "91.234.46.219",
+        "port" = 3306L,
+        "user" = "odvjet12_mislav",
+        "password" = "Contentio0207"
+      ))
 
-    # Provjera valjanosti OIB-a
-    if (oib_checker(input$oib) != 1) {
-      showFeedbackDanger(inputId = "oib", text = "Neispravan OIB.")
-      return(NULL)
-    } else {
-      hideFeedback("oib")
-    }
-
-    ime_prezime <- input$ime_prezime
-
-    if (ime_prezime == "") {
-      data <- loadDataFiz(input$oib)
-      if (nrow(data) > 0) {
-        ime_prezime <- data$ime_prezime[1]
-      } else {
-        ime_prezime <- ""
-        showFeedbackWarning(inputId = "ime_prezime", text = "Ime i prezime nisu pronađeni, molim vas unesite ime i prezime u tražilicu. Izvještaj će prikazati rezultate samo za uneseni OIB")
+      # Provjera OIB-a
+      if (nchar(oib) != 11) {
+        stop("OIB mora imati točno 11 znakova.")
       }
-    }
 
-    yaml_content <- paste0(
-      "oib: '", input$oib, "'\n",
-      "ime_prezime: '", ime_prezime, "'\n"
-    )
-    param_file <- "params.yml"
-    writeLines(yaml_content, param_file)
+      if (oib_checker(oib) != 1) {
+        stop("Neispravan OIB.")
+      }
 
-    cat("YAML Content:\n", yaml_content, "\n")
+      # Provjera imena i prezimena, dohvat podataka ako ime_prezime nije dano
+      if (ime_prezime == "") {
+        cat("Fetching data for OIB: ", oib, "\n")
+        data <- loadDataFiz(oib)  # Pozivanje loadDataFiz unutar future_promise
+        if (nrow(data) > 0) {
+          ime_prezime <- data$ime_prezime[1]
+        } else {
+          ime_prezime <- ""
+        }
+      }
 
-    file_name_ <- paste0(input$oib, '_fizicke.html')
-    print(file_name_)
+      # Generiranje YAML datoteke
+      yaml_content <- paste0(
+        "oib: '", oib, "'\n",
+        "ime_prezime: '", ime_prezime, "'\n"
+      )
+      param_file <- "params.yml"
+      writeLines(yaml_content, param_file)
 
-    render_command <- paste('quarto render fizicke_quarto.qmd --execute-params', param_file,
-                            '--output ', file_name_,
-                            '--output-dir reports')
+      cat("YAML Content:\n", yaml_content, "\n")
 
-    cat("Render Command:\n", render_command, "\n")
+      # Renderiranje izvještaja
+      file_name_ <- paste0(oib, '_fizicke.html')
+      render_command <- paste('quarto render fizicke_quarto.qmd --execute-params', param_file,
+                              '--output ', file_name_,
+                              '--output-dir reports')
 
-    system(render_command, wait = TRUE)
+      cat("Render Command:\n", render_command, "\n")
+      system(render_command, wait = TRUE)
 
-    return(file_name_)
+      cat("Task completed, file generated: ", file_name_, "\n")
+      return(file_name_)
+    })
+  }) |> bind_task_button(ns("render_btn"))
+
+  observeEvent(input$render_btn, {
+    cat("Invoke task with OIB: ", input$oib, "\n")
+    generate_report_task$invoke(input$oib, input$ime_prezime)
   })
 
   output$html_output <- renderUI({
-    req(html_file())
-    invalidateLater(180000, session)
     tags$iframe(style = "height:1000px; width:100%",
-                src = sprintf("my_resource/%s", html_file()))
+                src = sprintf("my_resource/%s", generate_report_task$result()))
   })
 
   output$download_ui <- renderUI({
-    req(html_file())
     downloadButton(ns("download_btn"), "Preuzmi dokument", class = "btn btn-success")
   })
 
   output$download_btn <- downloadHandler(
     filename = function() {
-      html_file()
+      generate_report_task$result()
     },
     content = function(file) {
-      file.copy(file.path("reports", html_file()), file)
+      file.copy(file.path("reports", generate_report_task$result()), file)
     }
   )
 }
-
