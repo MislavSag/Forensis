@@ -8,7 +8,7 @@ format:
     toc-depth: 2
     self-contained: true
 params:
-  oib: "18290972213" # Default vrijednost je prazna (00637770898)
+  oib: "" # Default vrijednost je prazna (00637770898)
 ---
 
 ```{r setup, include=FALSE}
@@ -87,16 +87,15 @@ if (!is.null(tablice$email_adrese)) {
 
 ```{r poslovanje}
 if (!is.null(tablice$predmeti_poslovanja)) {
-  if (!is.null(tablice$predmeti_poslovanja$nacionalna_klasifikacija_djelatnosti)) {
-    # Kombiniraj djelatnost_rbr, djelatnost_tekst i puni_naziv iz nacionalne_klasifikacije_djelatnosti
+  if (is.data.frame(tablice$predmeti_poslovanja$nacionalna_klasifikacija_djelatnosti)) {
+    # Ako je 'nacionalna_klasifikacija_djelatnosti' data frame, kombiniramo relevantne stupce
     df <- data.frame(
       Djelatnost_RBR = tablice$predmeti_poslovanja$djelatnost_rbr,
-      Djelatnost_Tekst = tablice$predmeti_poslovanja$djelatnost_tekst,
       NKD_Puni_Naziv = tablice$predmeti_poslovanja$nacionalna_klasifikacija_djelatnosti$puni_naziv
     )
     datatable(df, options = list(pageLength = 5), caption = "Predmeti poslovanja s NKD")
   } else {
-    # Prikaži samo predmeti_poslovanja bez NKD
+    # Ako 'nacionalna_klasifikacija_djelatnosti' nije data frame, prikazujemo cijelu tablicu
     datatable(tablice$predmeti_poslovanja, options = list(pageLength = 5), caption = "Predmeti poslovanja")
   }
 }
