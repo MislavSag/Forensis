@@ -17,6 +17,7 @@ ime_prezime po OIB-u - DODATNO - kako onda urediti fizicke_quarto ? Ako je param
 
 - [] GFI izvještaji
 - [] sakriti gumb na pocetku. pokayuje se samo kada se izvjetaj izgenerira.
+- [] provjerit ovaj OIB (02573674713) za pravne osobe i pogledati predmet_poslovanja
 
 ## V2
 

@@ -6,6 +6,13 @@ collection_name <- Sys.getenv("collection_name")
 sudreg_api_user <- Sys.getenv("SUDREG_API_USER") # sudski registar
 sudreg_api_pass <- Sys.getenv("SUDREG_API_PASS") # sudski registar
 
+mysql_host <- Sys.getenv("MYSQL_HOST")
+mysql_port <- as.integer(Sys.getenv("MYSQL_PORT"))
+mysql_user <- Sys.getenv("MYSQL_USER")
+mysql_password <- Sys.getenv("MYSQL_PASSWORD")
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 # Funkcija za DATA API
 dataApi <- function(oib, url, query = NULL){
   req = RETRY(
@@ -139,21 +146,25 @@ options(mysql = list(
 
 # Ovo je za Zemljišne knjige RS
 zkrs <- function(table = "zk_rs_vlasnici", naziv) {
-  db <- dbConnect(MySQL(), dbname = 'odvjet12_zk', host = options()$mysql$host,
-                  port = options()$mysql$port, user = options()$mysql$user,
-                  password = options()$mysql$password)
+  # Povezivanje na bazu podataka koristeći definirane varijable
+  db <- dbConnect(MySQL(), dbname = 'odvjet12_zk', host = mysql_host,
+                  port = mysql_port, user = mysql_user, password = mysql_password)
+
+  # Priprema query-ja
   zk_input <- paste0("+", stringr::str_split(enc2utf8(naziv), pattern = " ")[[1]], collapse = " ")
   query <- paste0("SELECT *, MATCH(vlasnik) AGAINST('", enc2utf8(zk_input), "' IN BOOLEAN MODE) AS score ",
                   "FROM ", table, " ",
                   "WHERE MATCH(vlasnik) AGAINST('", enc2utf8(zk_input),  "' IN BOOLEAN MODE) ",
                   "ORDER BY score DESC ",
                   "LIMIT 250;")
+
+  # Izvršavanje query-ja i postavljanje karakter seta
   rs <- dbSendQuery(db, 'set character set "utf8"')
   rs <- dbSendQuery(db, 'SET NAMES utf8')
   data <- dbGetQuery(db, query)
   dbDisconnect(db)
 
-  # Alternativa za map_dfr iz purrr paketa
+  # Alternativa za map_dfr iz purrr paketa za UTF-8 encoding
   data <- as.data.frame(lapply(data, function(x) {
     if (is.character(x)) {
       Encoding(x) <- "UTF-8"
@@ -178,18 +189,16 @@ DT_template <- function(df) {
 
 # Funkcija za povlacenje podataka o plovilima
 loadData_plovila <- function(naziv) {
-  # Connect to the database
-  db <- dbConnect(MySQL(), dbname = 'odvjet12_plovila', host = options()$mysql$host,
-                  port = options()$mysql$port, user = options()$mysql$user,
-                  password = options()$mysql$password)
-  # Construct the fetching query
+  db <- dbConnect(MySQL(), dbname = 'odvjet12_plovila', host = mysql_host,
+                  port = mysql_port, user = mysql_user, password = mysql_password)
+
   query <- paste0("SELECT * FROM plovila_all WHERE vlasnik LIKE '%", enc2utf8(naziv), "%'")
 
-  # Submit the fetch query and disconnect
   rs <- dbSendQuery(db, 'set character set "utf8"')
   rs <- dbSendQuery(db, 'SET NAMES utf8')
   data <- dbGetQuery(db, query)
   dbDisconnect(db)
+
   data <- as.data.frame(lapply(data, function(x) {
     if (is.character(x)) {
       Encoding(x) <- "UTF-8"
@@ -199,6 +208,7 @@ loadData_plovila <- function(naziv) {
 
   return(data)
 }
+
 
 # Template za DT plovila
 DT_plovila <- function(dataset, escape = FALSE, selection = 'row', ordring_log = FALSE, filename = "zk"){
@@ -230,18 +240,17 @@ oib_checker <- function(oib_vector){
 
 # Ovo je za dohvat podataka o fizičkim osobama
 loadDataFiz <- function(oibreqFiz) {
-  # Connect to the database
-  db <- dbConnect(MySQL(), dbname = "odvjet12_fizicke", host = options()$mysql$host,
-                  port = as.integer(options()$mysql$port), user = options()$mysql$user,
-                  password = options()$mysql$password)
-  # Construct the fetching query
+  db <- dbConnect(MySQL(), dbname = "odvjet12_fizicke", host = mysql_host,
+                  port = mysql_port, user = mysql_user, password = mysql_password)
+
   query <- sprintf("SELECT * FROM %s WHERE oib = '%s'", "fizicke_osobe", oibreqFiz)
-  # Submit the fetch query and disconnect
+
   rs <- dbSendQuery(db, 'set character set "utf8"')
   rs <- dbSendQuery(db, 'SET NAMES utf8')
   data <- dbGetQuery(db, query)
   dbDisconnect(db)
-  data
+
+  return(data)
 }
 
 # Povlaćenje podataka sa zdravstvenog - koristit će se u forensis dokument

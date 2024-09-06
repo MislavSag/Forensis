@@ -8,7 +8,7 @@ format:
     toc-depth: 2
     self-contained: true
 params:
-  oib: "" # Default vrijednost je prazna (00637770898)
+  oib: "02573674713" # Default vrijednost je prazna (00637770898)
 ---
 
 ```{r setup, include=FALSE}
