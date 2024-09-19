@@ -1,12 +1,12 @@
-name: ForensisTest
-title: ForensisTest
+name: CGSdelta
+title: CGSdelta
 username: forensis
 account: forensis
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
-appId: 12237631
-bundleId: 9065805
-url: https://forensis.shinyapps.io/ForensisTest/
+appId: 12248018
+bundleId: 9092053
+url: https://forensis.shinyapps.io/CGSdelta/
 version: 1
 asMultiple: FALSE
 asStatic: FALSE
