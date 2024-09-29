@@ -175,7 +175,7 @@ zkrs <- function(table = "zk_rs_vlasnici", naziv) {
   return(data)
 }
 
-# ovo je za zk RS, F
+# Ažurirana DT_template funkcija s prilagođenim nazivima datoteka
 DT_template <- function(df) {
   datatable(df,
             rownames = FALSE,
@@ -183,8 +183,16 @@ DT_template <- function(df) {
             extensions = 'Buttons',
             options = list(dom = 'Blfrtip',
                            pageLength = 5,
-                           buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
-                           lengthMenu = list(c(10,25,50,-1), c(10,25,50,"All"))))
+                           autoWidth = TRUE,  # Automatsko podešavanje širine stupaca
+                           buttons = list(
+                             'copy',
+                             list(extend = 'csv', filename = paste0("rezultati", Sys.Date())),  # Prilagođen naziv za CSV
+                             list(extend = 'excel', filename = paste0("rezultati", Sys.Date())),  # Prilagođen naziv za Excel
+                             list(extend = 'pdf', filename = paste0("rezultati", Sys.Date())),  # Prilagođen naziv za PDF
+                             'print'
+                           ),
+                           lengthMenu = list(c(10, 25, 50, -1), c('10', '25', '50', 'All'))
+            ))
 }
 
 # Funkcija za povlacenje podataka o plovilima

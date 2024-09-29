@@ -13,6 +13,7 @@ require(shinyjs)
 # require(firebase)
 require(promises)  # Za asinkrono programiranje
 require(future)  # Za asinkrono programiranje
+require(openxlsx)
 # Postavljanje plana za future
 future::plan(multisession, workers = 2)
 

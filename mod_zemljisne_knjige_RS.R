@@ -69,9 +69,8 @@ MS_zemljisne_knjige_RS <- function(input, output, session) {
   output$results_table <- renderDataTable({
     results <- pretraga_rezultati()
     if (!is.null(results) && nrow(results) > 0) {
-      datatable(results, escape = FALSE, options = list(
-        autoWidth = TRUE  # Omogućava automatsko podešavanje širine stupaca
-      ))
+      # Koristimo ažuriranu DT_template funkciju
+      DT_template(results)
     }
   }, server = FALSE)
 }

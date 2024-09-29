@@ -9,7 +9,7 @@ format:
     self-contained: true
 params:
   oib: "42531653196" # Default vrijednost
-  ime_prezime: ""
+  ime_prezime: "Matija Matic"
 ---
 
 ```{r setup, include=FALSE}
@@ -28,6 +28,7 @@ library(stringr)
 
 # Učitavanje zasebnih skripti
 source("functions.R")
+source("sifrarnik.R")
 
 # Postavljanje globalnih opcija za prikaz koda i upozorenja
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
@@ -50,11 +51,36 @@ U nastavku je prikazan status zdravstvenog osiguranja, poslovne funkcije u poduz
 # Dohvati podatke o osiguranju
 osig_data <- zdravstveno(oib)
 
-# Prikaz rezultata kao datatable
+# Provjeri je li osig_data prazan
 if (nrow(osig_data) == 0) {
   cat("Nema rezultata o zdravstvenom osiguranju")
 } else {
-  # Prikaz rezultata u tablici
+  # Pretvori osig_data, kategorija i osnova u data.table format
+  setDT(osig_data)
+  setDT(kategorija)
+  setDT(osnova)
+
+  # Dodaj vodeće nule u osig_data osnova (ako već nisu dodane)
+  osig_data[, osnova := str_pad(osnova, width = 5, side = "left", pad = "0")]
+
+  # Spoji osig_data s kategorija na osnovi šifre kategorije
+  osig_data <- merge(osig_data, kategorija, by.x = "kategorija", by.y = "Sifra", all.x = TRUE, sort = FALSE)
+
+  # Spoji osig_data s osnova na osnovi šifre osnove
+  osig_data <- merge(osig_data, osnova, by.x = "osnova", by.y = "Sifra", all.x = TRUE, sort = FALSE)
+
+  # Zamijeni šifre s opisima, ostavi šifru ako je opis NA
+  osig_data[, kategorija := ifelse(is.na(oznaka_kategorija), kategorija, oznaka_kategorija)]
+  osig_data[, osnova := ifelse(is.na(oznaka_osnova), osnova, oznaka_osnova)]
+
+  # Ukloni privremene stupce oznaka
+  osig_data[, c("oznaka_kategorija", "oznaka_osnova") := NULL]
+
+  # Promjena redoslijeda stupaca - osnova i kategorija idu na kraj
+  # Malo ruzno izgleda kod ali u slučaju da se u API pojavi nešto novo   (pa da ne pišem imena stupaca)
+  setcolorder(osig_data, c(setdiff(names(osig_data), c("osnova", "kategorija")), "osnova", "kategorija"))
+
+  # Prikaz rezultata u tablici koristeći DT paket za prikaz
   datatable(osig_data)
 }
 
