@@ -69,7 +69,7 @@ MS_registar_plovila <- function(input, output, session) {
   output$results_table <- renderDataTable({
     results <- pretraga_rezultati()
     if (!is.null(results) && nrow(results) > 0) {
-      DT_plovila(results)
+      DT_template_ZKBIH_plovila(results, filename_prefix = "Plovila_")
     }
   }, server = FALSE) # OVDJE JE DODANA POSTAVKA server = FALSE
 }

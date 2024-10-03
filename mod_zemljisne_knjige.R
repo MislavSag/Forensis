@@ -60,19 +60,12 @@ MUI_zemljisne_knjige <- function(id) {
                br(),
                br(),
                style = 'text-align: center;'
-        )
-      ),
+        )),
       fluidRow(
         column(12,
                div(class = "table-container",
                    uiOutput(ns("rezultati_tab")) %>% shinycssloaders::withSpinner(type = 8, color = "#0dc5c1")
                )
-        )
-      ),
-      # Dinamički prikaz gumba za export ovisno o rezultatima
-      fluidRow(
-        column(12,
-               uiOutput(ns("download_buttons"))  # Prikazujemo gumbove za preuzimanje ovdje
         )
       ),
       tags$script(
@@ -91,6 +84,7 @@ MUI_zemljisne_knjige <- function(id) {
 # Server funkcija za modul
 MS_zemljisne_knjige <- function(input, output, session, f) {
   pretraga_rezultati <- eventReactive(input$pretraga, {
+
     req(input$term)
 
     # Dohvaćanje rezultata pretrage iz API-ja
@@ -120,6 +114,7 @@ MS_zemljisne_knjige <- function(input, output, session, f) {
   })
 
   output$rezultati_tab <- renderUI({
+
     results <- pretraga_rezultati()
     if (is.null(results) || nrow(results) == 0) {
       return(HTML("<p style='font-size: 20px; color: red; font-weight: bold;'>Nema rezultata pretrage</p>"))
@@ -129,60 +124,10 @@ MS_zemljisne_knjige <- function(input, output, session, f) {
   })
 
   output$results_table <- renderDataTable({
+
     results <- pretraga_rezultati()
     if (!is.null(results) && nrow(results) > 0) {
-      # Renderiramo tablicu s radnim linkovima
-      datatable(results, escape = FALSE, options = list(
-        columnDefs = list(
-          list(targets = ncol(results),  # Dinamičko određivanje indeksa stupca Link
-               render = JS(
-                 "function(data, type, row) {
-                   return type === 'display' && data ? '<a href=\"' + data + '\" target=\"_blank\">Open</a>' : data;
-                 }"
-               )
-          )
-        )
-      ))
+      DT_template_ZKRH(results)
     }
   })
-
-  # Dinamički prikaz gumba za export CSV i Excel
-  output$download_buttons <- renderUI({
-    results <- pretraga_rezultati()
-    if (!is.null(results) && nrow(results) > 0) {
-      tagList(
-        downloadButton(session$ns("download_csv"), "Preuzmi CSV"),
-        downloadButton(session$ns("download_excel"), "Preuzmi Excel")
-      )
-    }
-  })
-
-  # Download CSV s UTF-8 kodiranjem i ručno dodanim BOM
-  output$download_csv <- downloadHandler(
-    filename = function() {
-      paste("ZK-", Sys.Date(), ".csv", sep = "")
-    },
-    content = function(file) {
-      # Otvorimo datoteku i dodamo BOM
-      con <- file(file, open = "wt", encoding = "UTF-8")
-      writeLines("\uFEFF", con)  # Dodajemo BOM (Byte Order Mark)
-
-      # Koristimo write.csv2() s točka-zarez separatorom, koji Excel bolje interpretira
-      write.csv2(pretraga_rezultati(), con, row.names = FALSE)
-
-      # Zatvorimo konekciju
-      close(con)
-    }
-  )
-
-  # Download Excel bez provjere instalacije paketa
-  output$download_excel <- downloadHandler(
-    filename = function() {
-      paste("ZK-", Sys.Date(), ".xlsx", sep="")
-    },
-    content = function(file) {
-      # Pisanje Excel datoteke
-      openxlsx::write.xlsx(pretraga_rezultati(), file)
-    }
-  )
 }

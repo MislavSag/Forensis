@@ -8,7 +8,7 @@ format:
     toc-depth: 2
     self-contained: true
 params:
-  oib: "02573674713" # Default vrijednost je prazna (00637770898)
+  oib: "12028724450" # YAML file pregazi ovaj broj u app ##02573674713
 ---
 
 ```{r setup, include=FALSE}
@@ -27,7 +27,7 @@ library(stringr)
 # Učitavanje zasebnih skripti
 source("functions.R")
 
-print(Sys.getenv("SUDREG_API_USER"))
+# print(Sys.getenv("SUDREG_API_USER"))
 
 # Postavljanje globalnih opcija za prikaz koda i upozorenja
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
@@ -43,11 +43,16 @@ tablice <- prikazi_podatke_pravne_osobe(data)
 naziv <- tablice$skracena_tvrtka$Skracena_Tvrtka[1]
 ```
 
-# Podaci - Sudski registar
+Prikazuju se podaci za: **OIB: `r params$oib`**.
+Koristi se skraćeni naziv tvrtke: **`r naziv`**.
+
+U nastavku su prikazani: detaljni podaci sa sudskog registra za pravnu osobu; podaci iz zemljišnih knjiga RH, Republike Srpske i Federacije; baza plovila RH.
+
+## Opći podaci - Sudski registar
 
 ```{r opci_podaci}
 if (!is.null(tablice$opci_podaci)) {
-  datatable(tablice$opci_podaci, options = list(pageLength = 5), caption = "Opći podaci")
+  datatable(tablice$opci_podaci, options = list(pageLength = 25, dom = 't', paging = FALSE), rownames = FALSE)
 }
 ```
 
@@ -55,7 +60,7 @@ if (!is.null(tablice$opci_podaci)) {
 
 ```{r tvrtka}
 if (!is.null(tablice$tvrtka)) {
-  datatable(tablice$tvrtka, options = list(pageLength = 5), caption = "Tvrtka")
+  datatable(tablice$tvrtka, options = list(pageLength = 5, dom = 't', paging = FALSE), rownames = FALSE)
 }
 ```
 
@@ -63,7 +68,7 @@ if (!is.null(tablice$tvrtka)) {
 
 ```{r skracena tvrtka}
 if (!is.null(tablice$skracena_tvrtka)) {
-  datatable(tablice$skracena_tvrtka, options = list(pageLength = 5), caption = "Skraćena Tvrtka")
+  datatable(tablice$skracena_tvrtka, options = list(pageLength = 5, dom = 't', paging = FALSE), rownames = FALSE)
 }
 ```
 
@@ -71,7 +76,7 @@ if (!is.null(tablice$skracena_tvrtka)) {
 
 ```{r sjediste}
 if (!is.null(tablice$sjediste)) {
-  datatable(tablice$sjediste, options = list(pageLength = 5), caption = "Sjedište")
+  datatable(tablice$sjediste, options = list(pageLength = 5, dom = 't', paging = FALSE), rownames = FALSE)
 }
 ```
 
@@ -79,7 +84,7 @@ if (!is.null(tablice$sjediste)) {
 
 ```{r email}
 if (!is.null(tablice$email_adrese)) {
-  datatable(tablice$email_adrese, options = list(pageLength = 5), caption = "Email adrese")
+  datatable(tablice$email_adrese, options = list(pageLength = 5, dom = 't', paging = FALSE), rownames = FALSE)
 }
 ```
 
@@ -96,7 +101,7 @@ if (!is.null(tablice$predmeti_poslovanja)) {
     datatable(df, options = list(pageLength = 5), caption = "Predmeti poslovanja s NKD")
   } else {
     # Ako 'nacionalna_klasifikacija_djelatnosti' nije data frame, prikazujemo cijelu tablicu
-    datatable(tablice$predmeti_poslovanja, options = list(pageLength = 5), caption = "Predmeti poslovanja")
+    datatable(tablice$predmeti_poslovanja, options = list(pageLength = 15), rownames = FALSE)
   }
 }
 
@@ -106,7 +111,7 @@ if (!is.null(tablice$predmeti_poslovanja)) {
 
 ```{r}
 if (!is.null(tablice$temeljni_kapitali)) {
-  datatable(tablice$temeljni_kapitali, options = list(pageLength = 5), caption = "Temeljni kapitali")
+  datatable(tablice$temeljni_kapitali, options = list(pageLength = 5, dom = 't', paging = FALSE), rownames = FALSE)
 }
 ```
 
@@ -114,7 +119,7 @@ if (!is.null(tablice$temeljni_kapitali)) {
 
 ```{r}
 if (!is.null(tablice$gfi)) {
-  datatable(tablice$gfi, options = list(pageLength = 5), caption = "GFI")
+  datatable(tablice$gfi, options = list(pageLength = 10, dom = 't', paging = FALSE), rownames = FALSE)
 }
 ```
 
@@ -122,7 +127,7 @@ if (!is.null(tablice$gfi)) {
 
 ```{r}
 if (!is.null(tablice$promjene)) {
-  datatable(tablice$promjene, options = list(pageLength = 5), caption = "Promjene")
+  datatable(tablice$promjene, options = list(pageLength = 10, dom = 't', paging = FALSE), rownames = FALSE)
 }
 ```
 
@@ -150,20 +155,8 @@ if (nrow(zkrh_data) == 0) {
   setnames(final_data, old = c("id", "type", "unit", "institution", "book", "status", "burden", "fileUrl"),
            new = c("ID", "Vrsta knjige", "Broj zemljišta (kat. čestice)", "Općinski sud / ZK odjel", "Glavna knjiga", "Status", "Teret", "Link"))
 
-  # Prikaz rezultata
-  datatable(final_data, escape = FALSE, options = list(
-    pageLength = 5,
-    columnDefs = list(
-      list(
-        targets = ncol(final_data),  # Indeks stupca 'Link'
-        render = JS(
-          "function(data, type, row, meta) {",
-          "return type === 'display' && data ? '<a href=\"' + data + '\" target=\"_blank\">Open</a>' : data;",
-          "}"
-        )
-      )
-    )
-  ))
+  # Prikaz rezultata koristeći funkciju DT_template_ZKRH
+  DT_template_ZKRH(final_data, fixedHeader = FALSE)
 }
 ```
 
@@ -190,20 +183,8 @@ if (nrow(zkrh_data) == 0) {
   setnames(final_data, old = c("id", "type", "unit", "institution", "book", "status", "burden", "fileUrl"),
            new = c("ID", "Vrsta knjige", "Broj zemljišta (kat. čestice)", "Općinski sud / ZK odjel", "Glavna knjiga", "Status", "Teret", "Link"))
 
-  # Prikaz rezultata
-  datatable(final_data, escape = FALSE, options = list(
-    pageLength = 5,
-    columnDefs = list(
-      list(
-        targets = ncol(final_data),  # Indeks stupca 'Link'
-        render = JS(
-          "function(data, type, row, meta) {",
-          "return type === 'display' && data ? '<a href=\"' + data + '\" target=\"_blank\">Open</a>' : data;",
-          "}"
-        )
-      )
-    )
-  ))
+  # Prikaz rezultata koristeći funkciju DT_template_ZKRH
+  DT_template_ZKRH(final_data, fixedHeader = FALSE)
 }
 
 ```
@@ -217,20 +198,8 @@ if (nrow(plovila_data) == 0) {
   cat(paste("Nema rezultata u registru plovila."))
 } else {
   final_plovila <- plovila_data
-  # Prikaz rezultata
-  datatable(final_plovila, escape = FALSE, options = list(
-    pageLength = 5,
-    columnDefs = list(
-      list(
-        targets = "_all",
-        render = JS(
-          "function(data, type, row, meta) {",
-          "return type === 'display' && data ? data : data;",
-          "}"
-        )
-      )
-    )
-  ))
+  # Prikaz rezultata koristeći funkciju DT_template_ZKBIH_plovila
+  DT_template_ZKBIH_plovila(zkrs_data, fixedHeader = FALSE)
 }
 
 ```
@@ -243,20 +212,8 @@ zkrs_data <- zkrs(naziv = naziv)
 if (nrow(zkrs_data) == 0) {
   cat(paste("Nema rezultata pretrage u zemljišnim knjigama RS"))
 } else {
-  # Prikaz rezultata
-  datatable(zkrs_data, escape = FALSE, options = list(
-    pageLength = 5,
-    columnDefs = list(
-      list(
-        targets = "_all",
-        render = JS(
-          "function(data, type, row, meta) {",
-          "return type === 'display' && data ? data : data;",
-          "}"
-        )
-      )
-    )
-  ))
+  # Prikaz rezultata koristeći funkciju DT_template_ZKBIH_plovila
+  DT_template_ZKBIH_plovila(zkrs_data, fixedHeader = FALSE)
 }
 ```
 
@@ -268,19 +225,7 @@ zkrs_data <- zkrs(naziv = naziv, table = "zk_f_vlasnici")
 if (nrow(zkrs_data) == 0) {
   cat(paste("Nema rezultata pretrage u zemljišnim knjigama RS"))
 } else {
-  # Prikaz rezultata
-  datatable(zkrs_data, escape = FALSE, options = list(
-    pageLength = 5,
-    columnDefs = list(
-      list(
-        targets = "_all",
-        render = JS(
-          "function(data, type, row, meta) {",
-          "return type === 'display' && data ? data : data;",
-          "}"
-        )
-      )
-    )
-  ))
+  # Prikaz rezultata koristeći funkciju DT_template_ZKBIH_plovila
+  DT_template_ZKBIH_plovila(zkrs_data, fixedHeader = FALSE)
 }
 ```

@@ -136,14 +136,6 @@ spoji_podatke <- function(api_data, mongo_data) {
   return(spojena_tablica)
 }
 
-# ovo je za pristup MySql bazi
-options(mysql = list(
-  "host" = "91.234.46.219",
-  "port" = 3306L,
-  "user" = "odvjet12_mislav",
-  "password" = "Contentio0207"
-))
-
 # Ovo je za Zemljišne knjige RS
 zkrs <- function(table = "zk_rs_vlasnici", naziv) {
   # Povezivanje na bazu podataka koristeći definirane varijable
@@ -175,25 +167,76 @@ zkrs <- function(table = "zk_rs_vlasnici", naziv) {
   return(data)
 }
 
-# Ažurirana DT_template funkcija s prilagođenim nazivima datoteka
-DT_template <- function(df) {
-  datatable(df,
-            rownames = FALSE,
-            escape = FALSE,
-            extensions = 'Buttons',
-            options = list(dom = 'Blfrtip',
-                           pageLength = 5,
-                           autoWidth = TRUE,  # Automatsko podešavanje širine stupaca
-                           buttons = list(
-                             'copy',
-                             list(extend = 'csv', filename = paste0("rezultati", Sys.Date())),  # Prilagođen naziv za CSV
-                             list(extend = 'excel', filename = paste0("rezultati", Sys.Date())),  # Prilagođen naziv za Excel
-                             list(extend = 'pdf', filename = paste0("rezultati", Sys.Date())),  # Prilagođen naziv za PDF
-                             'print'
-                           ),
-                           lengthMenu = list(c(10, 25, 50, -1), c('10', '25', '50', 'All'))
-            ))
+# ovo je DT template koji se koristi za RS i Federaciju (skraćeno BIH) i za plovila
+# dodaje se argument za uređivanje imena - to se mijenja u modulima
+DT_template_ZKBIH_plovila <- function(df, filename_prefix = "rezultati", fixedHeader = TRUE) {
+  datatable(
+    df,
+    rownames = FALSE,
+    extensions = c('Buttons', 'FixedHeader'),
+    options = list(
+      dom = 'Blfrtip',
+      pageLength = 10,  # Prikazivanje 10 unosa po stranici
+      autoWidth = TRUE,  # Automatsko podešavanje širine stupaca
+      ordering = TRUE,   # Omogućava sortiranje tablice
+      scrollX = TRUE,    # Omogućava horizontalno skrolanje
+      scrollY = '500px', # Omogućava vertikalno skrolanje unutar visine od 500px
+      fixedHeader = fixedHeader, # Zaglavlje će ostati vidljivo prilikom vertikalnog skrolanja
+      buttons = list(
+        'copy',
+        list(extend = 'csv', filename = paste0(filename_prefix, format(Sys.Date(), "%d-%m-%Y")),
+             bom = TRUE, charset = 'utf-8'),  # CSV
+        list(extend = 'excel', filename = paste0(filename_prefix, format(Sys.Date(), "%d-%m-%Y")),
+             bom = TRUE, charset = 'utf-8'),  # Excel
+        list(extend = 'pdf', filename = paste0(filename_prefix, format(Sys.Date(), "%d-%m-%Y"))),  # PDF
+        list(extend = 'print', title = ''),  # Print
+        'colvis'  # Gumb za kontrolu vidljivosti stupaca
+      ),
+      lengthMenu = list(c(5, 10, 25, 50, -1), c('5', '10', '25', '50', 'All'))
+    )
+  )
 }
+
+# ovo je DT funkcija za zemljišne knjige RH
+# posebno se definira export csv i excel-a zbog linka u zadnjem stupcu
+DT_template_ZKRH <- function(df, fixedHeader = TRUE) {
+  library(DT)
+
+  # Zero-based index of the 'Link' column
+  link_col_index <- which(names(df) == "Link") - 1  # R koristi indeksiranje od 1, JavaScript od 0
+
+  # Definiramo zajedničke JavaScript funkcije
+  filename_js <- JS("function() { var date = new Date(); var day = ('0' + date.getDate()).slice(-2); var month = ('0' + (date.getMonth() + 1)).slice(-2); var year = date.getFullYear(); return 'ZKRH_' + day + '-' + month + '-' + year; }")
+  body_js <- JS(paste0("function(data, row, column, node) { var idx = column; if(idx === ", link_col_index, ") { var link = $('<div>' + data + '</div>').find('a').attr('href'); return link ? link : data; } else { return data; } }"))
+
+  datatable(
+    df,
+    rownames = FALSE,
+    escape = FALSE,
+    extensions = c('Buttons', 'FixedHeader'),
+    options = list(
+      dom = 'Blfrtip',
+      pageLength = 10,  # Broj prikazanih rezultata na 10
+      scrollY = '500px',  # Omogućava vertikalno skrolanje unutar visine od 500px
+      fixedHeader = fixedHeader,  # Fiksira zaglavlje tablice prilikom skrolanja
+      columnDefs = list(
+        list(
+          targets = link_col_index,
+          render = JS("function(data, type, row, meta) { if(type === 'display'){ return '<a href=\"' + data + '\" target=\"_blank\">Open</a>'; } else { return data; } }")
+        )
+      ),
+      buttons = list(
+        list(extend = 'copy', filename = filename_js, exportOptions = list(columns = ':visible', format = list(body = body_js))),
+        list(extend = 'csv', filename = filename_js, bom = TRUE, charset = 'utf-8', exportOptions = list(columns = ':visible', format = list(body = body_js))),
+        list(extend = 'excel', filename = filename_js, bom = TRUE, charset = 'utf-8', exportOptions = list(columns = ':visible', format = list(body = body_js))),
+        list(extend = 'pdf', filename = filename_js, exportOptions = list(columns = ':visible', format = list(body = body_js))),
+        list(extend = 'print', filename = filename_js, title = '', exportOptions = list(columns = ':visible', format = list(body = body_js)))
+      ),
+      lengthMenu = list(c(10, 25, 50, -1), c('10', '25', '50', 'All'))
+    )
+  )
+}
+
 
 # Funkcija za povlacenje podataka o plovilima
 loadData_plovila <- function(naziv) {
@@ -215,21 +258,6 @@ loadData_plovila <- function(naziv) {
   }))
 
   return(data)
-}
-
-
-# Template za DT plovila
-DT_plovila <- function(dataset, escape = FALSE, selection = 'row', ordring_log = FALSE, filename = "zk"){
-  my_DT <- DT::datatable(dataset, rownames = FALSE, extensions = c('Buttons', "FixedHeader"), escape = escape,
-                         selection = list(target = selection),
-                         options = list(paging = TRUE, ordering = ordring_log, dom = 'Blfrtip', scrollX = TRUE,
-                                        pageLength = 10,  # Prikazivanje 10 unosa po stranici
-                                        lengthMenu = list(c(10, 25, 50, -1), c('10', '25', '50', 'All')),  # Opcije za "show entries"
-                                        buttons = list('copy', list(extend = 'csv', filename = filename),
-                                                       list(extend = 'excel', filename = filename),
-                                                       list(extend = 'pdf', filename = filename), 'print',
-                                                       list(extend = 'colvis', columns = c(1:(ncol(dataset)-1))))))
-  return(my_DT)
 }
 
 # Provjera oib-a

@@ -8,38 +8,27 @@
 
 ## GOTOVO:
 
-- [] Napomena ako loadDataFiz ne pronalazi ime_prezime po OIB-u
-DODATNO - kako onda urediti fizicke_quarto ? Ako je parametar ime_prezime prazno, funkcije koje pretrazuju podatke po imenu i prezimenu (zk rh, plovila...) javljaju error
+- [] Ako netko napiše samo OIB bez ime_prezime, a funkcija loadDataFiz ne pronađe ime_prezime,
+stavio sam sljedeće upozorenje: 
+"Nije pronađeno ime i prezime za navedeni OIB. Potrebno je napisati ime i prezime za generiranje izvještaja."
+- razlog je što nije moguće renderirati quarto dokument ako je ime_prezime = ""
+- jednostavnije mi je to nego u quarto stavljati if petlju da preskače chunk-ove gdje se traži ime_prezime, ako je ime_prezime = ""
 
-- [] nemamo napomene kod generiranja izvještaja -ocemo to dodati ? 
+- [] dodane napomene za generiranje izvještaja
+- [] uredio sam sve nazive tablica kod exporta
+- [] pojednostavio prikaze - kozmetički doradio što se moglo
+
+- [] stavio sam iste funkcije za prikaz DT-a u module i u quarto dokument - sada
+quarto dokumenti izgledaju full bolje i korisnici mogu koristiti export podataka
+unutar generiranog .html file-a
+
+## TODO
 
 - [] malo još proučiti šifranike u Sudskom registru - zna se
 dogoditi kaos kada API call povuće podatke za npr. PREDMET POSLOVANJA
 i jos uz to povuće dodatni DF sa nacionalnom klasifikacijom (izabrat jedno ili
 probat spojit sve zajedno) # nije toliko važno (za detalje vidi quarto pravne
 sa OIB-om "02573674713" - učitaj prvi chunk i pogledaj objekt "tablice" u global env)
-
-- [] ZK RS i Federacija koriste isti DT_template - kod skidanja tablica
-sam stavio da se file zove "rezultati...". Moguće je napraviti da svaki
-ima svoj template i da se file za RS kod skidanja zove "RS...", a kod Federacije
-"Federacija..."
-
-- [] U ZK RH se ne moze implementirati DT_template koji koriste RS i F
-Problem stvara zadnji stupac "link" na koji se moze kliknuti i otvoriti url.
-Nisam uspio sloziti niti poseban kod preko DT-a. Zadatak bi bio imati DT koji
-prikazuje linkove u aplikaciji i izvoz koji linkove pretvara u tekst. Prekomplicirano
-za DT() funkciju. Zato sam napravio "potpuno" drugačiji kod. Tablica se prikazuje normalno
-sa linkovima, a u UI i server funkciji se koriste ugrađeni gumbovi od shiny aplikacije
-za skidanje csv i xlsx file-ova. Kod je malo duži, morao sam ubaciti UTF-8 enkripciju,
-prikaz gumba nakon prikaza tablice, ali sve super radi.
-To mi se definitivno čini kao najlakše rješenje. Mozda se mozda i tablica spremiti u memoriju
-pa skinuti na neki klik ispod tablice...
-
-- [] Šifrarnik dodan u Zdravstveno za fizičke osobe (učitavam
-`source("sifrarnik.R")` direkt u quarto)
-ŠIFRARNIK JE ZASTARIO - upiši moj OIB:18710011268 i dobiješ ovo 00185, a ja sam nezaposlen u bazi
-
-## TODO
 
 - [] GFI izvještaji
 - [] provjerit ovaj OIB (02573674713) za pravne osobe i pogledati predmet_poslovanja
