@@ -1,45 +1,55 @@
-# modul fizičke osobe
+# Modul fizičke osobe
 
+# UI funkcija za modul
 MUI_forensis_fizicke_osobe <- function(id) {
   ns <- NS(id)
   fluidPage(
-    useShinyFeedback(), # Omogućuje korištenje shinyFeedback-a
+    useShinyFeedback(),  # Omogućuje korištenje shinyFeedback-a
     fluidRow(
-      column(width = 4, offset = 4,
-             align = "center",
-             h2("Izrada forenzičkog izvještaja za", strong("fizičke"), "osobe"),
-             br(),
-             br(),
-             textInput(ns("oib"), "OIB", width = "50%"),
-             br(),
-             textInput(ns("ime_prezime"), "Ime i Prezime (neobavezno)", width = "50%"),
-             br(),
-             actionButton(ns("render_btn"), "Generiraj dokument"),
-             br(),
-             br(),
-             uiOutput(ns("download_ui"))
-      )),
+      column(
+        width = 4, offset = 4, align = "center",
+        h2("Izrada forenzičkog izvještaja za", strong("fizičke"), "osobe"),
+        br(), br(),
+        textInput(ns("oib"), "OIB", width = "50%"),
+        br(),
+        textInput(ns("ime_prezime"), "Ime i Prezime (neobavezno)", width = "50%"),
+        br(),
+        actionButton(ns("render_btn"), "Generiraj dokument"),
+        # Dodana napomena ispod gumba
+        br(),
+        tags$small(
+          style = "color: gray;",
+          "Napomena: Generiranje izvještaja može potrajati nekoliko minuta."),
+        br(), br(),
+        uiOutput(ns("download_ui"))
+      )
+    ),
     fluidRow(
-      column(12,
-             div(style = "width: 100%;",
-                 shinycssloaders::withSpinner(
-                   uiOutput(ns("html_output"))
-                 )
-             )
+      column(
+        12,
+        div(
+          style = "width: 100%;",
+          shinycssloaders::withSpinner(
+            uiOutput(ns("html_output"))
+          )
+        )
       )
     ),
     tags$script(
-      HTML(sprintf("
+      HTML(sprintf(
+        "
         $(document).on('keypress', function(e) {
           if(e.which == 13 && $('#%s').is(':focus')) {
             $('#%s').click();
           }
         });
-      ", ns("oib"), ns("render_btn")))
+        ", ns("oib"), ns("render_btn")
+      ))
     )
   )
 }
 
+# Server funkcija za modul
 MS_forensis_fizicke_osobe <- function(input, output, session) {
   ns <- session$ns
 
@@ -47,14 +57,6 @@ MS_forensis_fizicke_osobe <- function(input, output, session) {
   generate_report_task <- ExtendedTask$new(function(oib, ime_prezime) {
     future_promise({
       cat("Task started\n")
-
-      # Postavljanje mysql opcija unutar paralelnog procesa
-      options(mysql = list(
-        "host" = "91.234.46.219",
-        "port" = 3306L,
-        "user" = "odvjet12_mislav",
-        "password" = "Contentio0207"
-      ))
 
       # Provjera OIB-a
       if (nchar(oib) != 11) {
@@ -71,8 +73,9 @@ MS_forensis_fizicke_osobe <- function(input, output, session) {
         data <- loadDataFiz(oib)  # Pozivanje loadDataFiz unutar future_promise
         if (nrow(data) > 0) {
           ime_prezime <- data$ime_prezime[1]
-        } else {
-          ime_prezime <- ""
+        } else { # ovo je upozorenje ako netko napiše OIB bez imena i prezimena, a taj OIB nije u loadDataFiz()
+          stop("Nije pronađeno ime i prezime za navedeni OIB.
+                Potrebno je napisati ime i prezime za generiranje izvještaja.")
         }
       }
 
@@ -88,9 +91,11 @@ MS_forensis_fizicke_osobe <- function(input, output, session) {
 
       # Renderiranje izvještaja
       file_name_ <- paste0(oib, '_fizicke.html')
-      render_command <- paste('quarto render fizicke_quarto.qmd --execute-params', param_file,
-                              '--output ', file_name_,
-                              '--output-dir reports')
+      render_command <- paste(
+        'quarto render fizicke_quarto.qmd --execute-params', param_file,
+        '--output', file_name_,
+        '--output-dir reports'
+      )
 
       cat("Render Command:\n", render_command, "\n")
       system(render_command, wait = TRUE)
@@ -106,8 +111,10 @@ MS_forensis_fizicke_osobe <- function(input, output, session) {
   })
 
   output$html_output <- renderUI({
-    tags$iframe(style = "height:1000px; width:100%",
-                src = sprintf("my_resource/%s", generate_report_task$result()))
+    tags$iframe(
+      style = "height:1000px; width:100%",
+      src = sprintf("my_resource/%s", generate_report_task$result())
+    )
   })
 
   output$download_ui <- renderUI({

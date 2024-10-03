@@ -8,8 +8,8 @@ format:
     toc-depth: 2
     self-contained: true
 params:
-  oib: "18710011268" # Default vrijednost
-  ime_prezime: "Matija Matic"
+  oib: "18710011268" # YAML file pregazi ovaj broj u app
+  ime_prezime: "Matija Matić"
 ---
 
 ```{r setup, include=FALSE}
@@ -38,11 +38,10 @@ oib <- params$oib
 ime_prezime <- params$ime_prezime
 ```
 
-# Podaci
 
 Prikazuju se podaci za: **OIB: `r params$oib`** i **Ime i Prezime: `r params$ime_prezime`**.
 
-U nastavku je prikazan status zdravstvenog osiguranja, poslovne funkcije u poduzećima, te podaci iz zemljišnih knjiga RH, RS i Federacije te baza plovila RH.
+U nastavku su prikazani: status zdravstvenog osiguranja; poslovne funkcije u poduzećima; podaci iz zemljišnih knjiga RH, Republike Srpske i Federacije te baza plovila RH.
 
 ## Status zdravstvenog osiguranja
 
@@ -55,34 +54,26 @@ osig_data <- zdravstveno(oib)
 if (nrow(osig_data) == 0) {
   cat("Nema rezultata o zdravstvenom osiguranju")
 } else {
-  # Pretvori osig_data, kategorija i osnova u data.table format
+  # Pretvori osig_data i kategorija u data.table format
   setDT(osig_data)
   setDT(kategorija)
-  setDT(osnova)
-
-  # Dodaj vodeće nule u osig_data osnova (ako već nisu dodane)
-  osig_data[, osnova := str_pad(osnova, width = 5, side = "left", pad = "0")]
 
   # Spoji osig_data s kategorija na osnovi šifre kategorije
   osig_data <- merge(osig_data, kategorija, by.x = "kategorija", by.y = "Sifra", all.x = TRUE, sort = FALSE)
 
-  # Spoji osig_data s osnova na osnovi šifre osnove
-  osig_data <- merge(osig_data, osnova, by.x = "osnova", by.y = "Sifra", all.x = TRUE, sort = FALSE)
-
   # Zamijeni šifre s opisima, ostavi šifru ako je opis NA
   osig_data[, kategorija := ifelse(is.na(oznaka_kategorija), kategorija, oznaka_kategorija)]
-  osig_data[, osnova := ifelse(is.na(oznaka_osnova), osnova, oznaka_osnova)]
 
-  # Ukloni privremene stupce oznaka
-  osig_data[, c("oznaka_kategorija", "oznaka_osnova") := NULL]
+  # Ukloni privremeni stupac oznaka
+  osig_data[, oznaka_kategorija := NULL]
 
-  # Promjena redoslijeda stupaca - osnova i kategorija idu na kraj
-  # Malo ruzno izgleda kod ali u slučaju da se u API pojavi nešto novo   (pa da ne pišem imena stupaca)
-  setcolorder(osig_data, c(setdiff(names(osig_data), c("osnova", "kategorija")), "osnova", "kategorija"))
+  # Zadrži samo željene stupce
+  osig_data <- osig_data[, .(oib, mbo, kategorija, podrucnaSluzba, dopunskoHzzo)]
 
   # Prikaz rezultata u tablici koristeći DT paket za prikaz
-  datatable(osig_data)
+  datatable(osig_data, options = list(dom = 't', paging = FALSE), rownames = FALSE)
 }
+  
 
 ```
 
@@ -98,7 +89,7 @@ if (nrow(poslovneFunk_data) == 0) {
   cat("Nema rezultata o poslovnim funkcijama u poduzećima")
 } else {
   # Prikaz rezultata u tablici
-  datatable(poslovneFunk_data)
+  datatable(poslovneFunk_data, options = list(dom = 't', paging = FALSE), rownames = FALSE)
 }
 ```
 
@@ -125,20 +116,24 @@ if (nrow(zkrh_data) == 0) {
   setnames(final_data, old = c("id", "type", "unit", "institution", "book", "status", "burden", "fileUrl"),
            new = c("ID", "Vrsta knjige", "Broj zemljišta (kat. čestice)", "Općinski sud / ZK odjel", "Glavna knjiga", "Status", "Teret", "Link"))
 
-  # Prikaz rezultata
-  datatable(final_data, escape = FALSE, options = list(
-    pageLength = 5,
-    columnDefs = list(
-      list(
-        targets = ncol(final_data),  # Indeks stupca 'Link'
-        render = JS(
-          "function(data, type, row, meta) {",
-          "return type === 'display' && data ? '<a href=\"' + data + '\" target=\"_blank\">Open</a>' : data;",
-          "}"
-        )
-      )
-    )
-  ))
+  # Prikaz rezultata - %%% STARO %%%
+  # datatable(final_data, escape = FALSE, options = list(
+  #   pageLength = 5,
+  #   columnDefs = list(
+  #     list(
+  #       targets = ncol(final_data),  # Indeks stupca 'Link'
+  #       render = JS(
+  #         "function(data, type, row, meta) {",
+  #         "return type === 'display' && data ? '<a href=\"' + data + '\" target=\"_blank\">Open</a>' : data;",
+  #         "}"
+  #       )
+  #     )
+  #   )
+  # ))
+  
+  # Prikaz rezultata koristeći funkciju DT_template_ZKRH
+  DT_template_ZKRH(final_data, fixedHeader = FALSE)
+
 }
 
 ```
@@ -166,21 +161,27 @@ if (nrow(zkrh_data) == 0) {
   setnames(final_data, old = c("id", "type", "unit", "institution", "book", "status", "burden", "fileUrl"),
            new = c("ID", "Vrsta knjige", "Broj zemljišta (kat. čestice)", "Općinski sud / ZK odjel", "Glavna knjiga", "Status", "Teret", "Link"))
 
-  # Prikaz rezultata
-  datatable(final_data, escape = FALSE, options = list(
-    pageLength = 5,
-    columnDefs = list(
-      list(
-        targets = ncol(final_data),  # Indeks stupca 'Link'
-        render = JS(
-          "function(data, type, row, meta) {",
-          "return type === 'display' && data ? '<a href=\"' + data + '\" target=\"_blank\">Open</a>' : data;",
-          "}"
-        )
-      )
-    )
-  ))
+#   # Prikaz rezultata - %%% STARO %%%
+#   datatable(final_data, escape = FALSE, options = list(
+#     pageLength = 5,
+#     columnDefs = list(
+#       list(
+#         targets = ncol(final_data),  # Indeks stupca 'Link'
+#         render = JS(
+#           "function(data, type, row, meta) {",
+#           "return type === 'display' && data ? '<a href=\"' + data + '\" target=\"_blank\">Open</a>' : data;",
+#           "}"
+#         )
+#       )
+#     )
+#   ))
+
+  # Prikaz rezultata koristeći funkciju DT_template_ZKRH
+  DT_template_ZKRH(final_data, fixedHeader = FALSE)
+    
 }
+  
+
 
 ```
 
@@ -193,20 +194,24 @@ if (nrow(plovila_data) == 0) {
   cat(paste("Nema rezultata u registru plovila."))
 } else {
   final_plovila <- plovila_data
-  # Prikaz rezultata
-  datatable(final_plovila, escape = FALSE, options = list(
-    pageLength = 5,
-    columnDefs = list(
-      list(
-        targets = "_all",
-        render = JS(
-          "function(data, type, row, meta) {",
-          "return type === 'display' && data ? data : data;",
-          "}"
-        )
-      )
-    )
-  ))
+
+#   # Prikaz rezultata %%% STARO %%%
+#   datatable(final_plovila, escape = FALSE, options = list(
+#     pageLength = 5,
+#     columnDefs = list(
+#       list(
+#         targets = "_all",
+#         render = JS(
+#           "function(data, type, row, meta) {",
+#           "return type === 'display' && data ? data : data;",
+#           "}"
+#         )
+#       )
+#     )
+#   ))
+
+  # Prikaz rezultata koristeći funkciju DT_template_ZKBIH_plovila
+  DT_template_ZKBIH_plovila(final_plovila, fixedHeader = FALSE)
 }
 
 ```
@@ -219,20 +224,23 @@ zkrs_data <- zkrs(naziv = ime_prezime)
 if (nrow(zkrs_data) == 0) {
   cat(paste("Nema rezultata pretrage u zemljišnim knjigama RS"))
 } else {
-  # Prikaz rezultata
-  datatable(zkrs_data, escape = FALSE, options = list(
-    pageLength = 5,
-    columnDefs = list(
-      list(
-        targets = "_all",
-        render = JS(
-          "function(data, type, row, meta) {",
-          "return type === 'display' && data ? data : data;",
-          "}"
-        )
-      )
-    )
-  ))
+  # # Prikaz rezultata
+  # datatable(zkrs_data, escape = FALSE, options = list(
+  #   pageLength = 5,
+  #   columnDefs = list(
+  #     list(
+  #       targets = "_all",
+  #       render = JS(
+  #         "function(data, type, row, meta) {",
+  #         "return type === 'display' && data ? data : data;",
+  #         "}"
+  #       )
+  #     )
+  #   )
+  # ))
+  
+  # Prikaz rezultata koristeći funkciju DT_template_ZKBIH_plovila
+  DT_template_ZKBIH_plovila(zkrs_data, fixedHeader = FALSE)
 }
 ```
 
@@ -240,24 +248,26 @@ if (nrow(zkrs_data) == 0) {
 ```{r zkF ime_prezime}
 
 # Dohvaćanje rezultata pretrage iz baze podataka za zemljišne knjige Federacija
-zkrs_data <- zkrs(naziv = ime_prezime, table = "zk_f_vlasnici")
-if (nrow(zkrs_data) == 0) {
+zkf_data <- zkrs(naziv = ime_prezime, table = "zk_f_vlasnici")
+if (nrow(zkf_data) == 0) {
   cat(paste("Nema rezultata pretrage u zemljišnim knjigama RS"))
 } else {
-  # Prikaz rezultata
-  datatable(zkrs_data, escape = FALSE, options = list(
-    pageLength = 5,
-    columnDefs = list(
-      list(
-        targets = "_all",
-        render = JS(
-          "function(data, type, row, meta) {",
-          "return type === 'display' && data ? data : data;",
-          "}"
-        )
-      )
-    )
-  ))
+  # # Prikaz rezultata
+  # datatable(zkf_data, escape = FALSE, options = list(
+  #   pageLength = 5,
+  #   columnDefs = list(
+  #     list(
+  #       targets = "_all",
+  #       render = JS(
+  #         "function(data, type, row, meta) {",
+  #         "return type === 'display' && data ? data : data;",
+  #         "}"
+  #       )
+  #     )
+  #   )
+  # ))
+  
+  # Prikaz rezultata koristeći funkciju DT_template_ZKBIH_plovila
+  DT_template_ZKBIH_plovila(zkf_data, fixedHeader = FALSE)
 }
 ```
-

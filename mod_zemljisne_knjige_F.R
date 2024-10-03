@@ -71,7 +71,7 @@ MS_zemljisne_knjige_F <- function(input, output, session) {
     results <- pretraga_rezultati()
     if (!is.null(results) && nrow(results) > 0) {
       # Koristimo ažuriranu DT_template funkciju
-      DT_template(results)
+      DT_template_ZKBIH_plovila(results, filename_prefix = "ZKFed_")
     }
   }, server = FALSE)
 }
