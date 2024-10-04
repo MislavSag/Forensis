@@ -71,7 +71,7 @@ if (nrow(osig_data) == 0) {
   osig_data <- osig_data[, .(oib, mbo, kategorija, podrucnaSluzba, dopunskoHzzo)]
 
   # Prikaz rezultata u tablici koristeći DT paket za prikaz
-  datatable(osig_data, options = list(dom = 't', paging = FALSE), rownames = FALSE)
+  datatable(osig_data, options = list(dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE)
 }
   
 
@@ -89,7 +89,7 @@ if (nrow(poslovneFunk_data) == 0) {
   cat("Nema rezultata o poslovnim funkcijama u poduzećima")
 } else {
   # Prikaz rezultata u tablici
-  datatable(poslovneFunk_data, options = list(dom = 't', paging = FALSE), rownames = FALSE)
+  datatable(poslovneFunk_data, options = list(dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE)
 }
 ```
 

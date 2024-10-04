@@ -129,5 +129,5 @@ MS_zemljisne_knjige <- function(input, output, session, f) {
     if (!is.null(results) && nrow(results) > 0) {
       DT_template_ZKRH(results)
     }
-  })
+  }, server = FALSE)
 }

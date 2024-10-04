@@ -9,6 +9,11 @@ MUI_forensis_pravne_osobe <- function(id) {
              textInput(ns("oib"), "OIB", width = "50%"),
              br(),
              actionButton(ns("render_btn"), "Generiraj dokument"),
+             # Dodana napomena ispod gumba
+             br(),
+             tags$small(
+               style = "color: gray;",
+               "Napomena: Generiranje izvještaja može potrajati nekoliko minuta."),
              br(),
              br(),
              uiOutput(ns("download_ui"))
