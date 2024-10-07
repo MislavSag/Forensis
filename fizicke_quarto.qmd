@@ -28,6 +28,7 @@ library(stringr)
 
 # Učitavanje zasebnih skripti
 source("functions.R")
+source("functions_quarto.R")
 source("sifrarnik.R")
 
 # Postavljanje globalnih opcija za prikaz koda i upozorenja
@@ -71,10 +72,9 @@ if (nrow(osig_data) == 0) {
   osig_data <- osig_data[, .(oib, mbo, kategorija, podrucnaSluzba, dopunskoHzzo)]
 
   # Prikaz rezultata u tablici koristeći DT paket za prikaz
-  datatable(osig_data, options = list(dom = 't', paging = FALSE), rownames = FALSE)
+  datatable(osig_data, options = list(dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE)
 }
   
-
 ```
 
 ## Poslovne funkcije u poduzećima
@@ -89,7 +89,7 @@ if (nrow(poslovneFunk_data) == 0) {
   cat("Nema rezultata o poslovnim funkcijama u poduzećima")
 } else {
   # Prikaz rezultata u tablici
-  datatable(poslovneFunk_data, options = list(dom = 't', paging = FALSE), rownames = FALSE)
+  datatable(poslovneFunk_data, options = list(dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE)
 }
 ```
 
@@ -98,6 +98,7 @@ if (nrow(poslovneFunk_data) == 0) {
 
 # Učitajte podatke iz zemljišnih knjiga prema OIB-u
 zkrh_data <- zkrh(oib, part = 0)
+
 if (nrow(zkrh_data) == 0) {
   cat(paste("Nema rezultata u zemljišnim knjigama"))
 } else {
@@ -116,24 +117,12 @@ if (nrow(zkrh_data) == 0) {
   setnames(final_data, old = c("id", "type", "unit", "institution", "book", "status", "burden", "fileUrl"),
            new = c("ID", "Vrsta knjige", "Broj zemljišta (kat. čestice)", "Općinski sud / ZK odjel", "Glavna knjiga", "Status", "Teret", "Link"))
 
-  # Prikaz rezultata - %%% STARO %%%
-  # datatable(final_data, escape = FALSE, options = list(
-  #   pageLength = 5,
-  #   columnDefs = list(
-  #     list(
-  #       targets = ncol(final_data),  # Indeks stupca 'Link'
-  #       render = JS(
-  #         "function(data, type, row, meta) {",
-  #         "return type === 'display' && data ? '<a href=\"' + data + '\" target=\"_blank\">Open</a>' : data;",
-  #         "}"
-  #       )
-  #     )
-  #   )
-  # ))
-  
-  # Prikaz rezultata koristeći funkciju DT_template_ZKRH
-  DT_template_ZKRH(final_data, fixedHeader = FALSE)
-
+  # Prikaz rezultata koristeći odgovarajući template ovisno o broju redaka
+  if (nrow(final_data) > 10) {
+    DT_template_ZKRH(final_data, fixedHeader = FALSE)
+  } else {
+    DT_template_ZKRH_simple(final_data)
+  }
 }
 
 ```
@@ -141,8 +130,9 @@ if (nrow(zkrh_data) == 0) {
 ## Zemljišne knjige RH po imenu i prezimenu
 ```{r zkrh ime_prezime}
 
-# Učitajte podatke iz zemljišnih knjiga prema OIB-u
+# Učitajte podatke iz zemljišnih knjiga prema ime_prezime
 zkrh_data <- zkrh(ime_prezime, part = 0)
+
 if (nrow(zkrh_data) == 0) {
   cat(paste("Nema rezultata u zemljišnim knjigama"))
 } else {
@@ -161,57 +151,33 @@ if (nrow(zkrh_data) == 0) {
   setnames(final_data, old = c("id", "type", "unit", "institution", "book", "status", "burden", "fileUrl"),
            new = c("ID", "Vrsta knjige", "Broj zemljišta (kat. čestice)", "Općinski sud / ZK odjel", "Glavna knjiga", "Status", "Teret", "Link"))
 
-#   # Prikaz rezultata - %%% STARO %%%
-#   datatable(final_data, escape = FALSE, options = list(
-#     pageLength = 5,
-#     columnDefs = list(
-#       list(
-#         targets = ncol(final_data),  # Indeks stupca 'Link'
-#         render = JS(
-#           "function(data, type, row, meta) {",
-#           "return type === 'display' && data ? '<a href=\"' + data + '\" target=\"_blank\">Open</a>' : data;",
-#           "}"
-#         )
-#       )
-#     )
-#   ))
-
-  # Prikaz rezultata koristeći funkciju DT_template_ZKRH
-  DT_template_ZKRH(final_data, fixedHeader = FALSE)
-    
+  # Prikaz rezultata koristeći odgovarajući template ovisno o broju redaka
+  if (nrow(final_data) > 10) {
+    DT_template_ZKRH(final_data, fixedHeader = FALSE)
+  } else {
+    DT_template_ZKRH_simple(final_data)
+  }
 }
-  
-
 
 ```
 
 ## Plovila RH po imenu i prezimenu
 ```{r plovila ime_prezime}
 
-# Dohvaćanje rezultata pretrage iz baze podataka za plovila
+# Dohvaćanje rezultata pretrage iz baze podataka za ime_prezime
 plovila_data <- loadData_plovila(ime_prezime)
+
 if (nrow(plovila_data) == 0) {
   cat(paste("Nema rezultata u registru plovila."))
 } else {
   final_plovila <- plovila_data
-
-#   # Prikaz rezultata %%% STARO %%%
-#   datatable(final_plovila, escape = FALSE, options = list(
-#     pageLength = 5,
-#     columnDefs = list(
-#       list(
-#         targets = "_all",
-#         render = JS(
-#           "function(data, type, row, meta) {",
-#           "return type === 'display' && data ? data : data;",
-#           "}"
-#         )
-#       )
-#     )
-#   ))
-
-  # Prikaz rezultata koristeći funkciju DT_template_ZKBIH_plovila
-  DT_template_ZKBIH_plovila(final_plovila, fixedHeader = FALSE)
+  
+  # Prikaz rezultata koristeći odgovarajući template ovisno o broju redaka
+  if (nrow(final_plovila) > 10) {
+    DT_template_ZKBIH_plovila(final_plovila, filename_prefix = "Plovila_")
+  } else {
+    DT_template_ZKBIH_plovila_simple(final_plovila, filename_prefix = "Plovila_")
+  }
 }
 
 ```
@@ -219,55 +185,36 @@ if (nrow(plovila_data) == 0) {
 ## Zemljišne knjige RS po imenu i prezimenu
 ```{r zkrs ime_prezime}
 
-# Dohvaćanje rezultata pretrage iz baze podataka za zemljišne knjige RS
 zkrs_data <- zkrs(naziv = ime_prezime)
+
 if (nrow(zkrs_data) == 0) {
   cat(paste("Nema rezultata pretrage u zemljišnim knjigama RS"))
 } else {
-  # # Prikaz rezultata
-  # datatable(zkrs_data, escape = FALSE, options = list(
-  #   pageLength = 5,
-  #   columnDefs = list(
-  #     list(
-  #       targets = "_all",
-  #       render = JS(
-  #         "function(data, type, row, meta) {",
-  #         "return type === 'display' && data ? data : data;",
-  #         "}"
-  #       )
-  #     )
-  #   )
-  # ))
-  
-  # Prikaz rezultata koristeći funkciju DT_template_ZKBIH_plovila
-  DT_template_ZKBIH_plovila(zkrs_data, fixedHeader = FALSE)
+  # Prikaz rezultata koristeći odgovarajući template ovisno o broju redaka
+  if (nrow(zkrs_data) > 10) {
+    DT_template_ZKBIH_plovila(zkrs_data, filename_prefix = "ZKRS_")
+  } else {
+    DT_template_ZKBIH_plovila_simple(zkrs_data, filename_prefix = "ZKRS_")
+  }
 }
+
 ```
 
 ## Zemljišne knjige Federacija po imenu i prezimenu
 ```{r zkF ime_prezime}
 
 # Dohvaćanje rezultata pretrage iz baze podataka za zemljišne knjige Federacija
-zkf_data <- zkrs(naziv = ime_prezime, table = "zk_f_vlasnici")
-if (nrow(zkf_data) == 0) {
-  cat(paste("Nema rezultata pretrage u zemljišnim knjigama RS"))
+zkrs_data <- zkrs(naziv = ime_prezime, table = "zk_f_vlasnici")
+
+if (nrow(zkrs_data) == 0) {
+  cat(paste("Nema rezultata pretrage u zemljišnim knjigama Federacija"))
 } else {
-  # # Prikaz rezultata
-  # datatable(zkf_data, escape = FALSE, options = list(
-  #   pageLength = 5,
-  #   columnDefs = list(
-  #     list(
-  #       targets = "_all",
-  #       render = JS(
-  #         "function(data, type, row, meta) {",
-  #         "return type === 'display' && data ? data : data;",
-  #         "}"
-  #       )
-  #     )
-  #   )
-  # ))
-  
-  # Prikaz rezultata koristeći funkciju DT_template_ZKBIH_plovila
-  DT_template_ZKBIH_plovila(zkf_data, fixedHeader = FALSE)
+  # Prikaz rezultata koristeći odgovarajući template ovisno o broju redaka
+  if (nrow(zkrs_data) > 10) {
+    DT_template_ZKBIH_plovila(zkrs_data, filename_prefix = "ZKFed_")
+  } else {
+    DT_template_ZKBIH_plovila_simple(zkrs_data, filename_prefix = "ZKFed_")
+  }
 }
+
 ```

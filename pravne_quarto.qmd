@@ -8,7 +8,7 @@ format:
     toc-depth: 2
     self-contained: true
 params:
-  oib: "12028724450" # YAML file pregazi ovaj broj u app ##02573674713
+  oib: "12028724450" # YAML file pregazi ovaj broj u app ##02573674713, 12028724450
 ---
 
 ```{r setup, include=FALSE}
@@ -26,8 +26,7 @@ library(stringr)
 
 # Učitavanje zasebnih skripti
 source("functions.R")
-
-# print(Sys.getenv("SUDREG_API_USER"))
+source("functions_quarto.R")
 
 # Postavljanje globalnih opcija za prikaz koda i upozorenja
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
@@ -40,7 +39,7 @@ data <- pravne_osobe_API(oib)
 tablice <- prikazi_podatke_pravne_osobe(data)
 
 # naziv ću spremiti kao skraćenu tvrtku
-naziv <- tablice$skracena_tvrtka$Skracena_Tvrtka[1]
+naziv <- tablice$tvrtka$Skracena_Tvrtka[1]
 ```
 
 Prikazuju se podaci za: **OIB: `r params$oib`**.
@@ -51,92 +50,176 @@ U nastavku su prikazani: detaljni podaci sa sudskog registra za pravnu osobu; po
 ## Opći podaci - Sudski registar
 
 ```{r opci_podaci}
-if (!is.null(tablice$opci_podaci)) {
-  datatable(tablice$opci_podaci, options = list(pageLength = 25, dom = 't', paging = FALSE), rownames = FALSE)
+
+if (!is.null(tablice$opci_podaci) && nrow(tablice$opci_podaci) > 0) {
+  # Konverzija datuma, koristeći nazive ključeva za veću otpornost na promjene
+  date_keys <- c("Datum Osnivanja", "Vrijeme Zadnje Izmjene")
+  
+  # Provjeravamo postoje li nazivi ključeva u stupcu 'Ključ', kako bismo spriječili pogreške ako su nazivi različiti
+  relevant_rows <- which(tablice$opci_podaci$Ključ %in% date_keys)
+  
+  if (length(relevant_rows) > 0) {
+    tablice$opci_podaci$Vrijednost[relevant_rows] <- format(
+      as.Date(tablice$opci_podaci$Vrijednost[relevant_rows], "%Y-%m-%dT%H:%M:%S"), "%d-%m-%Y")
+  }
+  
+  # Prikazujemo tablicu samo ako imamo stvarne podatke
+  datatable(tablice$opci_podaci, options = list(pageLength = 25, dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE)
+} else {
+  # Ako nema podataka, prikaži poruku o nedostupnim podacima
+  datatable(data.frame(Poruka = "Nema dostupnih općih podataka"), options = list(pageLength = 1, dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE)
 }
+
+
 ```
 
-## Tvrtka
+### Tvrtka
 
 ```{r tvrtka}
-if (!is.null(tablice$tvrtka)) {
-  datatable(tablice$tvrtka, options = list(pageLength = 5, dom = 't', paging = FALSE), rownames = FALSE)
+
+# Prikaz tablice 'tvrtka' ako postoje podaci
+if (!is.null(tablice$tvrtka) && nrow(tablice$tvrtka) > 0) {
+  # Prikazivanje tablice s podacima o tvrtki
+  datatable(tablice$tvrtka, options = list(pageLength = 5, dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE)
+} else {
+  # Ako podataka nema, prikazujemo obavijest korisniku
+  datatable(data.frame(Poruka = "Nema dostupnih podataka o tvrtki"), options = list(pageLength = 1, dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE)
 }
+
+
 ```
 
-## Skraćena tvrtka
-
-```{r skracena tvrtka}
-if (!is.null(tablice$skracena_tvrtka)) {
-  datatable(tablice$skracena_tvrtka, options = list(pageLength = 5, dom = 't', paging = FALSE), rownames = FALSE)
-}
-```
-
-## Sjedište
+### Sjedište
 
 ```{r sjediste}
-if (!is.null(tablice$sjediste)) {
-  datatable(tablice$sjediste, options = list(pageLength = 5, dom = 't', paging = FALSE), rownames = FALSE)
+
+if (!is.null(tablice$sjediste) && nrow(tablice$sjediste) > 0) {
+  # Pretvori tablicu u data.table za lakšu manipulaciju
+  sjediste_data <- as.data.table(tablice$sjediste)
+
+  # Provjeri postoji li stupac 'kucni_podbroj' i kreiraj sjediste_osnovno s odgovarajućim stupcima
+  potrebni_stupci <- c("naziv_zupanije", "naziv_opcine", "naziv_naselja", "ulica", "kucni_broj")
+  if ("kucni_podbroj" %in% names(sjediste_data)) potrebni_stupci <- c(potrebni_stupci, "kucni_podbroj")
+  
+  # Kreiraj osnovne podatke za sjediste koristeći relevantne stupce
+  sjediste_osnovno <- sjediste_data[, ..potrebni_stupci]
+  
+  # Prikaz u datatable
+  datatable(sjediste_osnovno, options = list(pageLength = 5, dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE)
+} else {
+  # Ako nema podataka, prikaži obavijest
+  datatable(data.frame(Poruka = "Nema dostupnih podataka o sjedištu"), options = list(pageLength = 1, dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE)
 }
+
+
 ```
 
-## Email adrese
+### Email adrese
 
 ```{r email}
-if (!is.null(tablice$email_adrese)) {
-  datatable(tablice$email_adrese, options = list(pageLength = 5, dom = 't', paging = FALSE), rownames = FALSE)
+
+if (!is.null(tablice$email_adrese) && nrow(tablice$email_adrese) > 0 && "adresa" %in% names(tablice$email_adrese)) {
+  # Ako postoje podaci i stupac 'adresa', prikaži ih
+  datatable(tablice$email_adrese[, "adresa", drop = FALSE], options = list(pageLength = 5, dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE)
+} else {
+  # Ako podataka nema ili stupac ne postoji, prikaži obavijest
+  datatable(data.frame(Poruka = "Nema dostupnih email adresa"), options = list(pageLength = 1, dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE)
 }
+
+
 ```
 
-## Predmet poslovanja
+### Predmet poslovanja
 
 ```{r poslovanje}
-if (!is.null(tablice$predmeti_poslovanja)) {
-  if (is.data.frame(tablice$predmeti_poslovanja$nacionalna_klasifikacija_djelatnosti)) {
-    # Ako je 'nacionalna_klasifikacija_djelatnosti' data frame, kombiniramo relevantne stupce
-    df <- data.frame(
-      Djelatnost_RBR = tablice$predmeti_poslovanja$djelatnost_rbr,
-      NKD_Puni_Naziv = tablice$predmeti_poslovanja$nacionalna_klasifikacija_djelatnosti$puni_naziv
-    )
-    datatable(df, options = list(pageLength = 5), caption = "Predmeti poslovanja s NKD")
+
+# Provjera postojanja podataka i stupca 'djelatnost_tekst'
+if (!is.null(tablice$predmeti_poslovanja) && nrow(tablice$predmeti_poslovanja) > 0 && "djelatnost_tekst" %in% names(tablice$predmeti_poslovanja)) {
+  # Pretvori tablicu u data.table i zadrži samo stupac 'djelatnost_tekst' bez NA vrijednosti
+  predmeti_osnovno <- as.data.table(tablice$predmeti_poslovanja)[!is.na(djelatnost_tekst), .(djelatnost_tekst)]
+  
+  # Prikaz tablice s različitim opcijama ovisno o broju redaka
+  if (nrow(predmeti_osnovno) > 5) {
+    # Ako ima više od 5 djelatnosti, prikaži tablicu s paginacijom i više redova po stranici
+    datatable(predmeti_osnovno, options = list(pageLength = 5, dom = 'p', paging = TRUE, ordering = FALSE), rownames = FALSE)
+  } else if (nrow(predmeti_osnovno) > 0) {
+    # Ako ima 5 ili manje djelatnosti, prikaži jednostavniju tablicu bez paginacije
+    datatable(predmeti_osnovno, options = list(pageLength = 1, dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE)
   } else {
-    # Ako 'nacionalna_klasifikacija_djelatnosti' nije data frame, prikazujemo cijelu tablicu
-    datatable(tablice$predmeti_poslovanja, options = list(pageLength = 15), rownames = FALSE)
+    # Ako nema redaka nakon uklanjanja NA, prikaži poruku
+    datatable(data.frame(Poruka = "Nema dostupnih predmeta poslovanja"), options = list(pageLength = 1, dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE)
   }
+  
+} else {
+  # Ako ne postoje podaci ili stupac 'djelatnost_tekst', prikaži poruku
+  datatable(data.frame(Poruka = "Nema dostupnih predmeta poslovanja"), options = list(pageLength = 1, dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE)
 }
+
 
 ```
 
-## Temeljni kapital
+### Temeljni kapital
 
 ```{r}
-if (!is.null(tablice$temeljni_kapitali)) {
-  datatable(tablice$temeljni_kapitali, options = list(pageLength = 5, dom = 't', paging = FALSE), rownames = FALSE)
+
+# Provjera postojanja podataka o temeljnim kapitalima
+if (!is.null(tablice$temeljni_kapitali) && nrow(tablice$temeljni_kapitali) > 0) {
+  # Prikaz tablice 'temeljni_kapitali' ako postoje rezultati
+  datatable(tablice$temeljni_kapitali, options = list(pageLength = 5, dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE)
+} else {
+  # Prikaz obavijesti ako podataka nema
+  datatable(data.frame(Poruka = "Nema dostupnih podataka o temeljnim kapitalima"), options = list(pageLength = 1, dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE)
 }
+
+
 ```
 
-## GFI
+### Godišnji financijski izvještaji (GFI)
 
 ```{r}
-if (!is.null(tablice$gfi)) {
-  datatable(tablice$gfi, options = list(pageLength = 10, dom = 't', paging = FALSE), rownames = FALSE)
+
+# Provjeri postojanje podataka za GFI
+if (!is.null(tablice$gfi) && nrow(tablice$gfi) > 0) {
+  # Pretvori tablicu 'gfi' u data.table za lakšu manipulaciju
+  gfi_data <- as.data.table(tablice$gfi)
+
+  # Provjeri postoje li svi potrebni stupci za daljnju obradu
+  potrebni_stupci <- c("vrsta_dokumenta", "godina_izvjestaja", "datum_dostave")
+  if (all(potrebni_stupci %in% names(gfi_data))) {
+    # Filtriraj rezultate tako da prikažeš samo godine > 2019
+    gfi_filtered <- gfi_data[godina_izvjestaja > 2019, .(vrsta_dokumenta, godina_izvjestaja, datum_dostave)]
+
+    # Konvertiraj 'datum_dostave' u format 'dan-mjesec-godina' bez vremena
+    gfi_filtered[, datum_dostave := format(as.Date(datum_dostave, "%Y-%m-%dT%H:%M:%S"), "%d-%m-%Y")]
+
+    # Ukloni duplikate prema prva dva stupca ('vrsta_dokumenta' i 'godina_izvjestaja')
+    gfi_unique <- gfi_filtered[!duplicated(gfi_filtered[, .(vrsta_dokumenta, godina_izvjestaja)]), ]
+
+    # Prikaz u datatable s različitim opcijama ovisno o broju redaka
+    if (nrow(gfi_unique) > 0) {
+      datatable(gfi_unique, options = list(pageLength = 10, dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE)
+    } else {
+      # Ako nema rezultata nakon filtriranja, prikaži obavijest
+      datatable(data.frame(Poruka = "Nema dostupnih podataka za godine nakon 2019."), options = list(pageLength = 1, dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE)
+    }
+  } else {
+    # Ako stupci nisu dostupni, prikaži obavijest
+    datatable(data.frame(Poruka = "Nema dovoljno podataka za prikaz GFI izvještaja."), options = list(pageLength = 1, dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE)
+  }
+} else {
+  # Ako tablica GFI nema redaka ili ne postoji, prikaži obavijest
+  datatable(data.frame(Poruka = "Nema dostupnih podataka za GFI izvještaje."), options = list(pageLength = 1, dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE)
 }
+
+
 ```
-
-## Promjene
-
-```{r}
-if (!is.null(tablice$promjene)) {
-  datatable(tablice$promjene, options = list(pageLength = 10, dom = 't', paging = FALSE), rownames = FALSE)
-}
-```
-
 
 ## Zemljišne knjige RH po oib-u
 ```{r zkrh oib}
 
 # Učitajte podatke iz zemljišnih knjiga prema OIB-u
-zkrh_data <- zkrh(oib, part = 0)
+zkrh_data <- zkrh(naziv, part = 0)
+
 if (nrow(zkrh_data) == 0) {
   cat(paste("Nema rezultata u zemljišnim knjigama"))
 } else {
@@ -155,16 +238,22 @@ if (nrow(zkrh_data) == 0) {
   setnames(final_data, old = c("id", "type", "unit", "institution", "book", "status", "burden", "fileUrl"),
            new = c("ID", "Vrsta knjige", "Broj zemljišta (kat. čestice)", "Općinski sud / ZK odjel", "Glavna knjiga", "Status", "Teret", "Link"))
 
-  # Prikaz rezultata koristeći funkciju DT_template_ZKRH
-  DT_template_ZKRH(final_data, fixedHeader = FALSE)
+  # Prikaz rezultata koristeći odgovarajući template ovisno o broju redaka
+  if (nrow(final_data) > 10) {
+    DT_template_ZKRH(final_data, fixedHeader = FALSE)
+  } else {
+    DT_template_ZKRH_simple(final_data)
+  }
 }
+
 ```
 
 ## Zemljišne knjige RH po nazivu
 ```{r zkrh naziv}
 
-# Učitajte podatke iz zemljišnih knjiga prema OIB-u
+# Učitajte podatke iz zemljišnih knjiga prema nazivu
 zkrh_data <- zkrh(naziv, part = 0)
+
 if (nrow(zkrh_data) == 0) {
   cat(paste("Nema rezultata u zemljišnim knjigama"))
 } else {
@@ -183,8 +272,12 @@ if (nrow(zkrh_data) == 0) {
   setnames(final_data, old = c("id", "type", "unit", "institution", "book", "status", "burden", "fileUrl"),
            new = c("ID", "Vrsta knjige", "Broj zemljišta (kat. čestice)", "Općinski sud / ZK odjel", "Glavna knjiga", "Status", "Teret", "Link"))
 
-  # Prikaz rezultata koristeći funkciju DT_template_ZKRH
-  DT_template_ZKRH(final_data, fixedHeader = FALSE)
+  # Prikaz rezultata koristeći odgovarajući template ovisno o broju redaka
+  if (nrow(final_data) > 10) {
+    DT_template_ZKRH(final_data, fixedHeader = FALSE)
+  } else {
+    DT_template_ZKRH_simple(final_data)
+  }
 }
 
 ```
@@ -194,12 +287,18 @@ if (nrow(zkrh_data) == 0) {
 
 # Dohvaćanje rezultata pretrage iz baze podataka za plovila
 plovila_data <- loadData_plovila(naziv)
+
 if (nrow(plovila_data) == 0) {
   cat(paste("Nema rezultata u registru plovila."))
 } else {
   final_plovila <- plovila_data
-  # Prikaz rezultata koristeći funkciju DT_template_ZKBIH_plovila
-  DT_template_ZKBIH_plovila(zkrs_data, fixedHeader = FALSE)
+  
+  # Prikaz rezultata koristeći odgovarajući template ovisno o broju redaka
+  if (nrow(final_plovila) > 10) {
+    DT_template_ZKBIH_plovila(final_plovila, filename_prefix = "Plovila_")
+  } else {
+    DT_template_ZKBIH_plovila_simple(final_plovila, filename_prefix = "Plovila_")
+  }
 }
 
 ```
@@ -209,12 +308,18 @@ if (nrow(plovila_data) == 0) {
 
 # Dohvaćanje rezultata pretrage iz baze podataka za zemljišne knjige RS
 zkrs_data <- zkrs(naziv = naziv)
+
 if (nrow(zkrs_data) == 0) {
   cat(paste("Nema rezultata pretrage u zemljišnim knjigama RS"))
 } else {
-  # Prikaz rezultata koristeći funkciju DT_template_ZKBIH_plovila
-  DT_template_ZKBIH_plovila(zkrs_data, fixedHeader = FALSE)
+  # Prikaz rezultata koristeći odgovarajući template ovisno o broju redaka
+  if (nrow(zkrs_data) > 10) {
+    DT_template_ZKBIH_plovila(zkrs_data, filename_prefix = "ZKRS_")
+  } else {
+    DT_template_ZKBIH_plovila_simple(zkrs_data, filename_prefix = "ZKRS_")
+  }
 }
+
 ```
 
 ## Zemljišne knjige Federacija po nazivu
@@ -222,10 +327,16 @@ if (nrow(zkrs_data) == 0) {
 
 # Dohvaćanje rezultata pretrage iz baze podataka za zemljišne knjige Federacija
 zkrs_data <- zkrs(naziv = naziv, table = "zk_f_vlasnici")
+
 if (nrow(zkrs_data) == 0) {
-  cat(paste("Nema rezultata pretrage u zemljišnim knjigama RS"))
+  cat(paste("Nema rezultata pretrage u zemljišnim knjigama Federacija"))
 } else {
-  # Prikaz rezultata koristeći funkciju DT_template_ZKBIH_plovila
-  DT_template_ZKBIH_plovila(zkrs_data, fixedHeader = FALSE)
+  # Prikaz rezultata koristeći odgovarajući template ovisno o broju redaka
+  if (nrow(zkrs_data) > 10) {
+    DT_template_ZKBIH_plovila(zkrs_data, filename_prefix = "ZKFed_")
+  } else {
+    DT_template_ZKBIH_plovila_simple(zkrs_data, filename_prefix = "ZKFed_")
+  }
 }
+
 ```
