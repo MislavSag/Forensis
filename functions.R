@@ -200,7 +200,6 @@ DT_template_ZKBIH_plovila <- function(df, filename_prefix = "rezultati", fixedHe
 # ovo je DT funkcija za zemljišne knjige RH
 # posebno se definira export csv i excel-a zbog linka u zadnjem stupcu
 DT_template_ZKRH <- function(df, fixedHeader = TRUE) {
-  library(DT)
 
   # Zero-based index of the 'Link' column
   link_col_index <- which(names(df) == "Link") - 1  # R koristi indeksiranje od 1, JavaScript od 0
@@ -401,10 +400,10 @@ prikazi_podatke_pravne_osobe <- function(data) {
 
     # Updating the DataFrame
     opci_podaci <- data.frame(
-      Ključ = c("MBS", "Status", "Sud Nadležan", "Sud Služba", "OIB", "MB", "Potpuni MBS",
+      Ključ = c("Status", "Sud Nadležan", "Sud Služba", "MB", "Potpuni MBS",
                 "Potpuni OIB", "Ino Podružnica", "Stečajna Masa", "Likvidacijska Masa",
                 "Glavna Djelatnost", "Postupak", "Pravni Oblik", "Kratica", "Datum Osnivanja", "Vrijeme Zadnje Izmjene"),
-      Vrijednost = c(mbs, status, sud_nadlezan_naziv, sud_sluzba_naziv, oib, mb,
+      Vrijednost = c(status, sud_nadlezan_naziv, sud_sluzba_naziv, mb,
                      potpuni_mbs, potpuni_oib, ino_podruznica, stecajna_masa,
                      likvidacijska_masa, glavna_djelatnost, postupak_znacenje, pravni_oblik_naziv, pravni_oblik_kratica, datum_osnivanja, vrijeme_zadnje_izmjene)
     )
