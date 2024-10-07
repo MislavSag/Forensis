@@ -24,6 +24,8 @@ MUI_forensis_fizicke_osobe <- function(id) {
         uiOutput(ns("download_ui"))
       )
     ),
+    br(),
+    br(),
     fluidRow(
       column(
         12,

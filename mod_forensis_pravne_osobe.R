@@ -18,6 +18,8 @@ MUI_forensis_pravne_osobe <- function(id) {
              br(),
              uiOutput(ns("download_ui"))
       )),
+    br(),
+    br(),
     fluidRow(
       column(12,
              div(style = "width: 100%;",
