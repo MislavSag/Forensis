@@ -66,7 +66,10 @@ MUI_zemljisne_knjige <- function(id) {
       fluidRow(
         column(12,
                div(class = "table-container",
-                   uiOutput(ns("rezultati_tab")) %>% shinycssloaders::withSpinner(type = 8, color = "#0dc5c1")
+                   shinycssloaders::withSpinner(
+                     uiOutput(ns("rezultati_tab")),
+                     type = 8, color = "#0dc5c1"
+                   )
                )
         )
       ),
@@ -90,10 +93,9 @@ MS_zemljisne_knjige <- function(input, output, session, f) {
     updateSelectizeInput(session, "book_filter", choices = c("Sve", sorted_books), server = TRUE)
   })
 
+  # eventReactive za dohvat podataka iz API-ja i MongoDB
   pretraga_rezultati <- eventReactive(input$pretraga, {
     req(input$term)
-
-    # Dohvaćanje rezultata pretrage iz API-ja
     if (Sys.info()["user"] == "Mislav") {
       zkrh_data <- zkrh(input$term, input$checkbox, input$history, limit = input$limit)
     } else {
@@ -104,7 +106,7 @@ MS_zemljisne_knjige <- function(input, output, session, f) {
 
     if (nrow(zkrh_data) == 0) {
       showNotification("Nema rezultata za unijeti pojam.", type = "error")
-      return(NULL)
+      return(data.table()) # Vraćamo praznu tablicu
     }
 
     # Dohvaćanje dokumenata iz MongoDB-a
@@ -119,7 +121,8 @@ MS_zemljisne_knjige <- function(input, output, session, f) {
 
     # Odabir potrebnih varijabli i promjena imena stupaca
     final_data <- final_data[, .(id, type, unit, institution, book, status, burden, fileUrl)]
-    setnames(final_data, old = c("id", "type", "unit", "institution", "book", "status", "burden", "fileUrl"),
+    setnames(final_data,
+             old = c("id", "type", "unit", "institution", "book", "status", "burden", "fileUrl"),
              new = c("ID", "Vrsta knjige", "Broj zemljišta (kat. čestice)", "Općinski sud / ZK odjel", "Glavna knjiga", "Status", "Teret", "Link"))
 
     # Prilagodba stupca 'Glavna knjiga'
@@ -130,34 +133,40 @@ MS_zemljisne_knjige <- function(input, output, session, f) {
 
     message("Broj redaka nakon transformacije podataka: ", nrow(final_data))
 
-    # Ako je odabran filter za 'Glavna knjiga'
-    if (!is.null(input$book_filter) && input$book_filter != "Sve") {
-      filtered_data <- final_data[`Glavna knjiga` == input$book_filter, ]
-      message("Broj redaka nakon filtriranja glavnih knjiga: ", nrow(filtered_data))
-      if (nrow(filtered_data) == 0) {
-        showNotification("Nema dostupnih rezultata za odabranu glavnu knjigu.", type = "error")
-        return(NULL)
-      }
-      return(filtered_data[1:min(100, nrow(filtered_data)), ])  # Selektira do 100 redova ili manje ako je dostupno
-    }
+    return(final_data)
+  })
 
-    message("Broj redaka nakon primene svih filtera: ", nrow(final_data))
-    return(final_data[1:min(100, nrow(final_data)), ])  # Selektira do 100 redova ili manje ako je dostupno
+  # Filtriranje podataka
+  filtrirani_podaci <- reactive({
+    data <- pretraga_rezultati()
+    req(data)
+    if (!is.null(input$book_filter) && input$book_filter != "Sve") {
+      filtered_data <- data[`Glavna knjiga` == input$book_filter, ]
+      message("Broj redaka nakon filtriranja glavnih knjiga: ", nrow(filtered_data))
+      return(filtered_data[1:min(100, nrow(filtered_data)), ])
+    } else {
+      message("Broj redaka nakon primene svih filtera (bez filtriranja): ", nrow(data))
+      return(data[1:min(100, nrow(data)), ])
+    }
   })
 
   output$rezultati_tab <- renderUI({
-    results <- pretraga_rezultati()
+    results <- filtrirani_podaci()
+    # Ako nema rezultata, prikaži praznu tablicu umjesto poruke
     if (is.null(results) || nrow(results) == 0) {
-      return(HTML("<p style='font-size: 20px; color: red; font-weight: bold;'>Nema rezultata pretrage</p>"))
+      return(dataTableOutput(session$ns("results_table")))
     } else {
       return(dataTableOutput(session$ns("results_table")))
     }
   })
 
   output$results_table <- renderDataTable({
-    results <- pretraga_rezultati()
-    if (!is.null(results) && nrow(results) > 0) {
-      DT_template_ZKRH(results)  # Koristi funkciju za prikaz tablice
+    results <- filtrirani_podaci()
+    # Ako nema rezultata, prikažemo praznu tablicu:
+    if (is.null(results) || nrow(results) == 0) {
+      return(DT::datatable(data.frame(), options = list(dom = 't')))
+    } else {
+      return(DT_template_ZKRH(results))
     }
   }, server = FALSE)
 }
