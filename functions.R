@@ -29,7 +29,7 @@ dataApi <- function(oib, url, query = NULL){
 }
 
 # Funkcija za dohvaćanje podataka iz API-ja zemljišne knjige
-zkrh <- function(search_term, part, history = "false", limit = 200, skip = 0) {
+zkrh <- function(search_term, part, history = "false", limit = 100, skip = 0) {
   response <- GET("http://dac.hr/api/v1/query",
                   query = list(
                     q = search_term,
@@ -235,7 +235,6 @@ DT_template_ZKRH <- function(df, fixedHeader = TRUE) {
     )
   )
 }
-
 
 # Funkcija za povlacenje podataka o plovilima
 loadData_plovila <- function(naziv) {

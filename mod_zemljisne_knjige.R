@@ -5,8 +5,7 @@ MUI_zemljisne_knjige <- function(id) {
   ns <- NS(id)
   fluidPage(
     tags$head(
-      tags$style(HTML("
-        .table-container {
+      tags$style(HTML(".table-container {
           width: 80%;
           margin: 0 auto;
         }
@@ -17,8 +16,7 @@ MUI_zemljisne_knjige <- function(id) {
         }
         .center-radio .shiny-input-container {
           margin: 0 15px;
-        }
-      "))
+        }"))
     ),
     tagList(
       fluidRow(
@@ -56,6 +54,10 @@ MUI_zemljisne_knjige <- function(id) {
                ),
                br(),
                br(),
+               div(class = "center-radio",
+                   selectizeInput(ns("book_filter"), "Glavna knjiga:", choices = NULL, selected = NULL, multiple = FALSE, options = list(placeholder = 'Pretražite glavne knjige...'))
+               ),
+               br(),
                actionButton(ns("pretraga"), "Pretraži"),
                br(),
                br(),
@@ -69,13 +71,11 @@ MUI_zemljisne_knjige <- function(id) {
         )
       ),
       tags$script(
-        HTML(sprintf("
-          $(document).on('keypress', function(e) {
+        HTML(sprintf("$(document).on('keypress', function(e) {
             if(e.which == 13 && $('#%s').is(':focus')) {
               $('#%s').click();
             }
-          });
-        ", ns("term"), ns("pretraga")))
+          });", ns("term"), ns("pretraga")))
       )
     )
   )
@@ -83,17 +83,29 @@ MUI_zemljisne_knjige <- function(id) {
 
 # Server funkcija za modul
 MS_zemljisne_knjige <- function(input, output, session, f) {
-  pretraga_rezultati <- eventReactive(input$pretraga, {
+  # Dohvaćanje meta podataka za filter glavne knjige
+  meta <- fread("meta-20240710141424.csv")
+  observe({
+    sorted_books <- sort(unique(meta$value1))
+    updateSelectizeInput(session, "book_filter", choices = c("Sve", sorted_books), server = TRUE)
+  })
 
+  pretraga_rezultati <- eventReactive(input$pretraga, {
     req(input$term)
 
     # Dohvaćanje rezultata pretrage iz API-ja
     if (Sys.info()["user"] == "Mislav") {
       zkrh_data <- zkrh(input$term, input$checkbox, input$history, limit = input$limit)
     } else {
-      zkrh_data <- zkrh(input$term, input$checkbox, input$history, limit = 100)
+      zkrh_data <- zkrh(input$term, input$checkbox, input$history, limit = 2000)
     }
-    if (nrow(zkrh_data) == 0) return(NULL)
+
+    message("Broj redaka nakon dohvaćanja podataka: ", nrow(zkrh_data))
+
+    if (nrow(zkrh_data) == 0) {
+      showNotification("Nema rezultata za unijeti pojam.", type = "error")
+      return(NULL)
+    }
 
     # Dohvaćanje dokumenata iz MongoDB-a
     mongo_data <- mongoDB(zkrh_data$id, collection = collection_name, db = db_name, url = db_url)
@@ -110,11 +122,30 @@ MS_zemljisne_knjige <- function(input, output, session, f) {
     setnames(final_data, old = c("id", "type", "unit", "institution", "book", "status", "burden", "fileUrl"),
              new = c("ID", "Vrsta knjige", "Broj zemljišta (kat. čestice)", "Općinski sud / ZK odjel", "Glavna knjiga", "Status", "Teret", "Link"))
 
-    return(final_data)
+    # Prilagodba stupca 'Glavna knjiga'
+    final_data[, `Glavna knjiga` := toupper(gsub("^Zemljišnoknjižni odjel ", "", `Glavna knjiga`))]
+
+    # Uklanjanje redova sa svim NA vrednostima
+    final_data <- na.omit(final_data)
+
+    message("Broj redaka nakon transformacije podataka: ", nrow(final_data))
+
+    # Ako je odabran filter za 'Glavna knjiga'
+    if (!is.null(input$book_filter) && input$book_filter != "Sve") {
+      filtered_data <- final_data[`Glavna knjiga` == input$book_filter, ]
+      message("Broj redaka nakon filtriranja glavnih knjiga: ", nrow(filtered_data))
+      if (nrow(filtered_data) == 0) {
+        showNotification("Nema dostupnih rezultata za odabranu glavnu knjigu.", type = "error")
+        return(NULL)
+      }
+      return(filtered_data[1:min(100, nrow(filtered_data)), ])  # Selektira do 100 redova ili manje ako je dostupno
+    }
+
+    message("Broj redaka nakon primene svih filtera: ", nrow(final_data))
+    return(final_data[1:min(100, nrow(final_data)), ])  # Selektira do 100 redova ili manje ako je dostupno
   })
 
   output$rezultati_tab <- renderUI({
-
     results <- pretraga_rezultati()
     if (is.null(results) || nrow(results) == 0) {
       return(HTML("<p style='font-size: 20px; color: red; font-weight: bold;'>Nema rezultata pretrage</p>"))
@@ -124,10 +155,9 @@ MS_zemljisne_knjige <- function(input, output, session, f) {
   })
 
   output$results_table <- renderDataTable({
-
     results <- pretraga_rezultati()
     if (!is.null(results) && nrow(results) > 0) {
-      DT_template_ZKRH(results)
+      DT_template_ZKRH(results)  # Koristi funkciju za prikaz tablice
     }
   }, server = FALSE)
 }
