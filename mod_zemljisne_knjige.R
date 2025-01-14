@@ -90,7 +90,15 @@ MS_zemljisne_knjige <- function(input, output, session, f) {
   meta <- fread("meta-20240710141424.csv")
   observe({
     sorted_books <- sort(unique(meta$value1))
-    updateSelectizeInput(session, "book_filter", choices = c("Sve", sorted_books), server = TRUE)
+    updateSelectizeInput(
+      session,
+      "book_filter",
+      choices = c("Sve", sorted_books),
+      server = TRUE,
+      options = list(
+        maxOptions = 5000  # <-- Dodano da prikaže sve opcije
+      )
+    )
   })
 
   # eventReactive za dohvat podataka iz API-ja i MongoDB
