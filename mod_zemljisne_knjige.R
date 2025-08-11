@@ -1,6 +1,6 @@
-# mod_zemljisne_knjige.R
+# mod_zemljisne_knjige_sql.R
 
-# UI funkcija za modul
+# UI funkcija za novi SQL modul
 MUI_zemljisne_knjige <- function(id) {
   ns <- NS(id)
   fluidPage(
@@ -84,9 +84,9 @@ MUI_zemljisne_knjige <- function(id) {
   )
 }
 
-# Server funkcija za modul
+# Server funkcija za novi SQL modul
 MS_zemljisne_knjige <- function(input, output, session, f) {
-  # Dohvaćanje meta podataka za filter glavne knjige
+  # Dohvaćanje meta podataka za filter glavne knjige (nepromijenjeno)
   meta <- fread("meta-20240710141424.csv")
   observe({
     sorted_books <- sort(unique(meta$value1))
@@ -96,33 +96,33 @@ MS_zemljisne_knjige <- function(input, output, session, f) {
       choices = c("Sve", sorted_books),
       server = TRUE,
       options = list(
-        maxOptions = 5000  # <-- Dodano da prikaže sve opcije
+        maxOptions = 5000
       )
     )
   })
 
-  # eventReactive za dohvat podataka iz API-ja i MongoDB
+  # eventReactive za dohvat podataka koristeći nove SQL funkcije
   pretraga_rezultati <- eventReactive(input$pretraga, {
     req(input$term)
-    if (Sys.info()["user"] == "Mislav") {
-      zkrh_data <- zkrh(input$term, input$checkbox, input$history, limit = input$limit)
-    } else {
-      zkrh_data <- zkrh(input$term, input$checkbox, input$history, limit = 2000)
-    }
 
-    message("Broj redaka nakon dohvaćanja podataka: ", nrow(zkrh_data))
+    # --- IZMJENA: Korištenje novih funkcija ---
+    # 1. Dohvat s API-ja
+    api_data <- zkrh_sql(input$term, input$checkbox, input$history, limit = 2000)
+    message("Broj redaka nakon dohvaćanja s API-ja: ", nrow(api_data))
 
-    if (nrow(zkrh_data) == 0) {
+    if (nrow(api_data) == 0) {
       showNotification("Nema rezultata za unijeti pojam.", type = "error")
-      return(data.table()) # Vraćamo praznu tablicu
+      return(data.table())
     }
 
-    # Dohvaćanje dokumenata iz MongoDB-a
-    mongo_data <- mongoDB(zkrh_data$id, collection = collection_name, db = db_name, url = db_url)
+    # 2. Dohvaćanje linkova iz MySQL baze
+    sql_data <- dohvati_linkove_iz_zkpdf(api_data)
+    message("Broj linkova dohvaćenih iz MySQL baze: ", nrow(sql_data))
 
-    # Spajanje podataka
-    final_data <- spoji_podatke(zkrh_data, mongo_data)
+    # 3. Spajanje podataka
+    final_data <- spoji_podatke_sql(api_data, sql_data)
 
+    # --- Ostatak koda je nepromijenjen ---
     # Ažuriranje URL-a
     base_url <- "https://oss.uredjenazemlja.hr/oss/public/reports/ldb-extract/"
     final_data[, fileUrl := ifelse(is.na(fileUrl), NA_character_, paste0(base_url, fileUrl))]
@@ -136,15 +136,14 @@ MS_zemljisne_knjige <- function(input, output, session, f) {
     # Prilagodba stupca 'Glavna knjiga'
     final_data[, `Glavna knjiga` := toupper(gsub("^Zemljišnoknjižni odjel ", "", `Glavna knjiga`))]
 
-    # Uklanjanje redova sa svim NA vrednostima
-    final_data <- na.omit(final_data)
+    # Uklanjanje redova sa svim NA vrednostima u ključnim stupcima
+    final_data <- na.omit(final_data, cols = c("ID", "Vrsta knjige", "Broj zemljišta (kat. čestice)", "Općinski sud / ZK odjel", "Glavna knjiga"))
 
     message("Broj redaka nakon transformacije podataka: ", nrow(final_data))
-
     return(final_data)
   })
 
-  # Filtriranje podataka
+  # Ostatak server funkcije (filtriranje i renderiranje) je identičan originalnom modulu
   filtrirani_podaci <- reactive({
     data <- pretraga_rezultati()
     req(data)
@@ -160,7 +159,6 @@ MS_zemljisne_knjige <- function(input, output, session, f) {
 
   output$rezultati_tab <- renderUI({
     results <- filtrirani_podaci()
-    # Ako nema rezultata, prikaži praznu tablicu umjesto poruke
     if (is.null(results) || nrow(results) == 0) {
       return(dataTableOutput(session$ns("results_table")))
     } else {
@@ -170,7 +168,6 @@ MS_zemljisne_knjige <- function(input, output, session, f) {
 
   output$results_table <- renderDataTable({
     results <- filtrirani_podaci()
-    # Ako nema rezultata, prikažemo praznu tablicu:
     if (is.null(results) || nrow(results) == 0) {
       return(DT::datatable(data.frame(), options = list(dom = 't')))
     } else {

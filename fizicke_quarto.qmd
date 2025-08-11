@@ -9,7 +9,7 @@ format:
     self-contained: true
 params:
   oib: "18710011268" # YAML file pregazi ovaj broj u app
-  ime_prezime: "Matija Matić"
+  ime_prezime: "Matija MatiĆ"
 ---
 
 ```{r setup, include=FALSE}
@@ -42,40 +42,8 @@ ime_prezime <- params$ime_prezime
 
 Prikazuju se podaci za: **OIB: `r params$oib`** i **Ime i Prezime: `r params$ime_prezime`**.
 
-U nastavku su prikazani: status zdravstvenog osiguranja; poslovne funkcije u poduzećima; podaci iz zemljišnih knjiga RH, Republike Srpske i Federacije te baza plovila RH.
+U nastavku su prikazani: poslovne funkcije u poduzećima; podaci iz zemljišnih knjiga RH, Republike Srpske i Federacije te baza plovila RH.
 
-## Status zdravstvenog osiguranja
-
-```{r zdrav}
-
-# Dohvati podatke o osiguranju
-osig_data <- zdravstveno(oib)
-
-# Provjeri je li osig_data prazan
-if (nrow(osig_data) == 0) {
-  cat("Nema rezultata o zdravstvenom osiguranju")
-} else {
-  # Pretvori osig_data i kategorija u data.table format
-  setDT(osig_data)
-  setDT(kategorija)
-
-  # Spoji osig_data s kategorija na osnovi šifre kategorije
-  osig_data <- merge(osig_data, kategorija, by.x = "kategorija", by.y = "Sifra", all.x = TRUE, sort = FALSE)
-
-  # Zamijeni šifre s opisima, ostavi šifru ako je opis NA
-  osig_data[, kategorija := ifelse(is.na(oznaka_kategorija), kategorija, oznaka_kategorija)]
-
-  # Ukloni privremeni stupac oznaka
-  osig_data[, oznaka_kategorija := NULL]
-
-  # Zadrži samo željene stupce
-  osig_data <- osig_data[, .(oib, mbo, kategorija, podrucnaSluzba, dopunskoHzzo)]
-
-  # Prikaz rezultata u tablici koristeći DT paket za prikaz
-  datatable(osig_data, options = list(dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE)
-}
-  
-```
 
 ## Poslovne funkcije u poduzećima
 ```{r poslovne funkcije}
@@ -95,7 +63,6 @@ if (nrow(poslovneFunk_data) == 0) {
 
 ## Zemljišne knjige RH po oib-u
 ```{r zkrh oib}
-
 # Učitajte podatke iz zemljišnih knjiga prema OIB-u
 zkrh_data <- zkrh(oib, part = 0)
 
@@ -125,12 +92,13 @@ if (nrow(zkrh_data) == 0) {
   }
 }
 
+
 ```
 
 ## Zemljišne knjige RH po imenu i prezimenu
 ```{r zkrh ime_prezime}
 
-# Učitajte podatke iz zemljišnih knjiga prema ime_prezime
+# Učitajte podatke iz zemljišnih knjiga prema OIB-u
 zkrh_data <- zkrh(ime_prezime, part = 0)
 
 if (nrow(zkrh_data) == 0) {

@@ -55,31 +55,13 @@ MUI_forensis_fizicke_osobe <- function(id) {
 MS_forensis_fizicke_osobe <- function(input, output, session) {
   ns <- session$ns
 
-  # Kreiranje zadatka za generiranje izvještaja
+  # 1) Kreiramo zadatak za generiranje izvještaja
+  #    (ovdje smo maknuli "stop()" za OIB i ime_prezime - umjesto toga,
+  #     validirat ćemo ih prije samog pokeštanja).
   generate_report_task <- ExtendedTask$new(function(oib, ime_prezime) {
+    # Ovdje radimo samo "glavni" posao - generiranje dokumenta
     future_promise({
       cat("Task started\n")
-
-      # Provjera OIB-a
-      if (nchar(oib) != 11) {
-        stop("OIB mora imati točno 11 znakova.")
-      }
-
-      if (oib_checker(oib) != 1) {
-        stop("Neispravan OIB.")
-      }
-
-      # Provjera imena i prezimena, dohvat podataka ako ime_prezime nije dano
-      if (ime_prezime == "") {
-        cat("Fetching data for OIB: ", oib, "\n")
-        data <- loadDataFiz(oib)  # Pozivanje loadDataFiz unutar future_promise
-        if (nrow(data) > 0) {
-          ime_prezime <- data$ime_prezime[1]
-        } else { # ovo je upozorenje ako netko napiše OIB bez imena i prezimena, a taj OIB nije u loadDataFiz()
-          stop("Nije pronađeno ime i prezime za navedeni OIB.
-                Potrebno je napisati ime i prezime za generiranje izvještaja.")
-        }
-      }
 
       # Generiranje YAML datoteke
       yaml_content <- paste0(
@@ -107,18 +89,67 @@ MS_forensis_fizicke_osobe <- function(input, output, session) {
     })
   }) |> bind_task_button(ns("render_btn"))
 
+  # 2) observeEvent: kada kliknemo na "Generiraj dokument",
+  #    prvo provjeravamo OIB i pokušavamo dohvatiti ime/prezime
+  #    prije samog 'invoke' ExtendedTask-a.
   observeEvent(input$render_btn, {
     cat("Invoke task with OIB: ", input$oib, "\n")
-    generate_report_task$invoke(input$oib, input$ime_prezime)
+
+    # a) Provjera duljine OIB-a
+    if (nchar(input$oib) != 11) {
+      showFeedbackDanger(
+        inputId = "oib",
+        text = "OIB mora imati točno 11 znakova!"
+      )
+      return(NULL)
+    } else {
+      hideFeedback("oib")  # ako je sve ok, sakrij poruku
+    }
+
+    # b) Provjera ispravnosti OIB-a
+    if (oib_checker(input$oib) != 1) {
+      showFeedbackDanger(
+        inputId = "oib",
+        text = "Neispravan OIB!"
+      )
+      return(NULL)
+    } else {
+      hideFeedback("oib")
+    }
+
+    # c) Ako ime/prezime nije uneseno, pokušaj dohvatiti iz baze
+    ime_prezime_local <- input$ime_prezime
+    if (ime_prezime_local == "") {
+      cat("Fetching data for OIB: ", input$oib, "\n")
+      data <- loadDataFiz(input$oib)
+      if (nrow(data) > 0) {
+        ime_prezime_local <- data$ime_prezime[1]
+      } else {
+        showFeedbackDanger(
+          inputId = "ime_prezime",
+          text = "Nije pronađeno ime i prezime za navedeni OIB.
+          Potrebno je napisati ime i prezime za generiranje izvještaja."
+        )
+        return(NULL)
+      }
+    } else {
+      hideFeedback("ime_prezime")
+    }
+
+    # Ako je sve prošlo bez return(NULL), možemo pokrenuti zadatak
+    generate_report_task$invoke(input$oib, ime_prezime_local)
   })
 
+  # 3) iframe prikaz HTML-a nakon što je generiran
   output$html_output <- renderUI({
+    req(generate_report_task$result())  # čekaj da postoji rezultat
     tags$iframe(
       style = "height:1000px; width:100%",
       src = sprintf("my_resource/%s", generate_report_task$result())
     )
   })
 
+  # 4) Gumb za preuzimanje generiranog dokumenta
   output$download_ui <- renderUI({
     req(generate_report_task$result())
     downloadButton(ns("download_btn"), "Preuzmi dokument", class = "btn btn-success")
@@ -133,3 +164,4 @@ MS_forensis_fizicke_osobe <- function(input, output, session) {
     }
   )
 }
+

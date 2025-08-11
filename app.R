@@ -25,9 +25,18 @@ if (!dir.exists("reports")) {
 # Add resource path for Quarto HTML file
 addResourcePath("my_resource", "reports")
 
+# ovo je za tablice plovila
+vlasnici_plovila <- fread("Podaci/VlasniciPlovila.csv", check.names = FALSE, na.strings = c("", "NA"))
+opci_podaci <- fread("Podaci/OpciPodaci.csv", check.names = FALSE, na.strings = c("", "NA"))
+porivni_uredaji <- fread("Podaci/Porivni_uredaji.csv", check.names = FALSE, na.strings = c("", "NA"))
+korisnici_plovila <- fread("Podaci/KorisniciPlovila.csv", check.names = FALSE, na.strings = c("", "NA"))
+prethodni_upis <- fread("Podaci/PrethodniUpis.csv", check.names = FALSE, na.strings = c("", "NA"))
+tenicki_pregled <- fread("Podaci/TehnickiPregled.csv", check.names = FALSE, na.strings = c("", "NA"))
+
 # Učitavanje zasebnih skripti
 source("functions.R")
 source("mod_zemljisne_knjige.R")
+source("mod_zemljisne_knjige_sql.R") # &lt;-- DODANO
 source("mod_registar_plovila.R")
 source("mod_forensis_fizicke_osobe.R")
 source("mod_zemljisne_knjige_RS.R")
@@ -44,7 +53,6 @@ ui = page_navbar(
   nav_panel(title = "Registar plovila RH", MUI_registar_plovila("registar_plovila")),
   nav_panel(title = "Forensis fizičke osobe", MUI_forensis_fizicke_osobe("forensis_fizicke_osobe")),
   nav_panel(title = "Forensis pravne osobe", MUI_forensis_pravne_osobe("forensis_pravne_osobe")),
-  nav_spacer(),
   nav_panel(
     tags$a(
       icon("sign-out-alt"),
@@ -58,9 +66,15 @@ server <- function(input, output, session) {
   callModule(MS_zemljisne_knjige, "zemljisne_knjige")
   callModule(MS_zemljisne_knjige_RS, "zemljisne_knjige_RS")
   callModule(MS_zemljisne_knjige_F, "zemljisne_knjige_F")
-  callModule(MS_registar_plovila, "registar_plovila")
   callModule(MS_forensis_fizicke_osobe, "forensis_fizicke_osobe")
   callModule(MS_forensis_pravne_osobe, "forensis_pravne_osobe")
+  callModule(MS_registar_plovila, "registar_plovila",
+             vlasnici_plovila = vlasnici_plovila,
+             korisnici_plovila = korisnici_plovila,
+             opci_podaci = opci_podaci,
+             porivni_uredaji = porivni_uredaji,
+             tenicki_pregled = tenicki_pregled,
+             prethodni_upis = prethodni_upis)
 }
 
 # Pokretanje aplikacije

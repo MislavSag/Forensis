@@ -8,7 +8,7 @@ format:
     toc-depth: 2
     self-contained: true
 params:
-  oib: "12028724450" # YAML file pregazi ovaj broj u app ##02573674713, 12028724450
+  oib: "67605519013" # YAML file pregazi ovaj broj u app ##02573674713, 12028724450
 ---
 
 ```{r setup, include=FALSE}
